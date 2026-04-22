@@ -233,7 +233,7 @@ export function ChatView() {
                 send();
               }
             }}
-            placeholder="Ask R2D2 anything… (e.g. 'list files in the workspace')"
+            placeholder="Your orders, Sir… (e.g. 'R2D2, list the workspace')"
             disabled={busy}
           />
           <Button onClick={send} disabled={busy || !input.trim()}>
