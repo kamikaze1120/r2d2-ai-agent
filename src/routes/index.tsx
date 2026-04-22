@@ -1,26 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AppShell } from "@/components/AppShell";
+import { ChatView } from "@/components/ChatView";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "R2D2 Control — Local AI Agent" },
+      {
+        name: "description",
+        content:
+          "Web control panel for R2D2, a local-first AI agent that runs on your laptop with Ollama.",
+      },
+      { property: "og:title", content: "R2D2 Control — Local AI Agent" },
+      {
+        property: "og:description",
+        content: "Chat, run tools, and manage memory for your local R2D2 agent.",
+      },
+    ],
+  }),
+  component: Page,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
+function Page() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <AppShell>
+      <ChatView />
+    </AppShell>
   );
-}
-
-function Index() {
-  return <PlaceholderIndex />;
 }
