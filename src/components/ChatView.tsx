@@ -233,7 +233,7 @@ export function ChatView() {
                 send();
               }
             }}
-            placeholder="Ask R2D2 anything… (e.g. 'list files in the workspace')"
+            placeholder="Your orders, Sir… (e.g. 'R2D2, list the workspace')"
             disabled={busy}
           />
           <Button onClick={send} disabled={busy || !input.trim()}>
@@ -252,16 +252,16 @@ function EmptyState() {
       <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/15 text-primary text-2xl font-bold">
         R2
       </div>
-      <h2 className="text-lg font-semibold">R2D2 is ready</h2>
+      <h2 className="text-lg font-semibold">At your service, Sir.</h2>
       <p className="max-w-sm text-sm text-muted-foreground">
-        Ask anything. R2D2 will reason through the task, call local tools
-        (files, shell, web search, memory), and reply.
+        R2D2 online. Local tools armed — files, shell, web, and memory.
+        Whenever you're ready, do give the word.
       </p>
       <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs">
         {[
-          "Search the web for today's AI news",
-          "Create a file notes.md and write 5 bullet ideas",
-          "What's in my workspace?",
+          "Brief me on today's headlines, R2D2",
+          "Draft a file notes.md with five ideas",
+          "What's currently in the workspace?",
         ].map((s) => (
           <Badge key={s} variant="secondary" className="font-normal">
             {s}
