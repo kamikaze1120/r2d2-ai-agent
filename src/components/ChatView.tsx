@@ -211,7 +211,7 @@ export function ChatView() {
           )}
           <div className="flex flex-col gap-4">
             {messages.map((m, i) => (
-              <MessageBubble key={i} msg={m} />
+              <MessageBubble key={i} msg={m} tts={tts} />
             ))}
             {busy && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
