@@ -13,7 +13,8 @@ import {
   type Session,
 } from "@/lib/r2d2-api";
 import { cn } from "@/lib/utils";
-import { Plus, Send, Trash2, AlertCircle, Loader2, ChevronRight } from "lucide-react";
+import { getAutoSpeak, useTTS } from "@/hooks/useTTS";
+import { Plus, Send, Trash2, AlertCircle, Loader2, ChevronRight, Volume2, Square } from "lucide-react";
 
 type DisplayMsg = {
   role: "user" | "assistant";
