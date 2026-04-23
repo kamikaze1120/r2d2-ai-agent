@@ -30,6 +30,7 @@ export function ChatView() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const tts = useTTS();
 
   const refreshSessions = async () => {
     try {
