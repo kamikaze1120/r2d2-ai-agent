@@ -203,7 +203,7 @@ See `r2d2-agent/README.md` for the full env var reference.
 
 ## 📜 License & credit
 
-MIT. Built and maintained by **Mohammed**. R2-D2 and J.A.R.V.I.S. are trademarks of their respective owners — this project is a fan-inspired homage, not affiliated with Lucasfilm or Marvel.
+MIT. Built and maintained by **Mohammed**. R2-D2 is trademarks of their respective owners — this project is a fan-inspired homage, not affiliated with Lucasfilm or Marvel.
 
 <div align="center">
 
