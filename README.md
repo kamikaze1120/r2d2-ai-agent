@@ -4,7 +4,7 @@
 
 # R2D2
 
-### Your local-first AI butler — runs on your laptop, speaks like J.A.R.V.I.S., answers to **R2D2**.
+### Your local-first AI butler — runs on your laptop, answers to **R2D2**.
 
 [![Made by Mohammed](https://img.shields.io/badge/Made%20by-Mohammed-0a84ff?style=for-the-badge)](#)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
