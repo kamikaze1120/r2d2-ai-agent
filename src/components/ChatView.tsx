@@ -142,6 +142,9 @@ export function ChatView() {
               copy[assistantIdx] = { ...copy[assistantIdx], content: ev.text };
               return copy;
             });
+            if (getAutoSpeak() && ev.text) {
+              tts.speak(ev.text);
+            }
           } else if (ev.type === "error") {
             setErr(ev.message);
           }
