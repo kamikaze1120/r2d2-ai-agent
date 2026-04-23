@@ -4,14 +4,26 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useR2D2Health } from "@/hooks/useR2D2Health";
-import { CheckCircle2, XCircle, Save, RefreshCw } from "lucide-react";
+import {
+  VOICE_OPTIONS,
+  getAutoSpeak,
+  getVoiceId,
+  setAutoSpeak,
+  setVoiceId,
+  useTTS,
+} from "@/hooks/useTTS";
+import { CheckCircle2, XCircle, Save, RefreshCw, Volume2, Loader2 } from "lucide-react";
 
 export function SettingsView() {
   const [base, setBase] = useState(getApiBase());
   const [model, setModelState] = useState(getModel());
+  const [voice, setVoice] = useState(getVoiceId());
+  const [auto, setAuto] = useState(getAutoSpeak());
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const { health, connected, loading, error } = useR2D2Health(7000);
+  const { speak, speaking, error: ttsError } = useTTS();
 
   useEffect(() => {
     if (!model && health?.default_model) setModelState(health.default_model);
