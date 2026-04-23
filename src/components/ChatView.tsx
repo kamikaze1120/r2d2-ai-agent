@@ -277,7 +277,13 @@ function EmptyState() {
   );
 }
 
-function MessageBubble({ msg }: { msg: DisplayMsg }) {
+function MessageBubble({
+  msg,
+  tts,
+}: {
+  msg: DisplayMsg;
+  tts: ReturnType<typeof useTTS>;
+}) {
   if (msg.role === "user") {
     return (
       <div className="flex justify-end">
@@ -292,8 +298,21 @@ function MessageBubble({ msg }: { msg: DisplayMsg }) {
       <div className="flex max-w-[90%] flex-col gap-2">
         {msg.steps && msg.steps.length > 0 && <StepsTrail steps={msg.steps} />}
         {msg.content && (
-          <div className="rounded-2xl rounded-bl-sm bg-secondary px-4 py-2 text-sm whitespace-pre-wrap">
+          <div className="group relative rounded-2xl rounded-bl-sm bg-secondary px-4 py-2 pr-10 text-sm whitespace-pre-wrap">
             {msg.content}
+            <button
+              onClick={() =>
+                tts.speaking ? tts.stop() : tts.speak(msg.content)
+              }
+              className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground opacity-0 transition hover:bg-background hover:text-foreground group-hover:opacity-100"
+              title={tts.speaking ? "Stop" : "Speak"}
+            >
+              {tts.speaking ? (
+                <Square className="size-3.5" />
+              ) : (
+                <Volume2 className="size-3.5" />
+              )}
+            </button>
           </div>
         )}
       </div>
