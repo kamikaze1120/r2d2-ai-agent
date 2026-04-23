@@ -32,6 +32,8 @@ export function SettingsView() {
   const save = () => {
     setApiBase(base);
     setModel(model);
+    setVoiceId(voice);
+    setAutoSpeak(auto);
     setSavedAt(Date.now());
     // Refresh page-level state by reloading; cheap and reliable
     setTimeout(() => window.location.reload(), 400);
