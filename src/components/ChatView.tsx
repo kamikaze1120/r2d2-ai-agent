@@ -13,7 +13,8 @@ import {
   type Session,
 } from "@/lib/r2d2-api";
 import { cn } from "@/lib/utils";
-import { Plus, Send, Trash2, AlertCircle, Loader2, ChevronRight } from "lucide-react";
+import { getAutoSpeak, useTTS } from "@/hooks/useTTS";
+import { Plus, Send, Trash2, AlertCircle, Loader2, ChevronRight, Volume2, Square } from "lucide-react";
 
 type DisplayMsg = {
   role: "user" | "assistant";
@@ -29,6 +30,7 @@ export function ChatView() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const tts = useTTS();
 
   const refreshSessions = async () => {
     try {
@@ -140,6 +142,9 @@ export function ChatView() {
               copy[assistantIdx] = { ...copy[assistantIdx], content: ev.text };
               return copy;
             });
+            if (getAutoSpeak() && ev.text) {
+              tts.speak(ev.text);
+            }
           } else if (ev.type === "error") {
             setErr(ev.message);
           }
@@ -206,7 +211,7 @@ export function ChatView() {
           )}
           <div className="flex flex-col gap-4">
             {messages.map((m, i) => (
-              <MessageBubble key={i} msg={m} />
+              <MessageBubble key={i} msg={m} tts={tts} />
             ))}
             {busy && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -272,7 +277,13 @@ function EmptyState() {
   );
 }
 
-function MessageBubble({ msg }: { msg: DisplayMsg }) {
+function MessageBubble({
+  msg,
+  tts,
+}: {
+  msg: DisplayMsg;
+  tts: ReturnType<typeof useTTS>;
+}) {
   if (msg.role === "user") {
     return (
       <div className="flex justify-end">
@@ -287,8 +298,21 @@ function MessageBubble({ msg }: { msg: DisplayMsg }) {
       <div className="flex max-w-[90%] flex-col gap-2">
         {msg.steps && msg.steps.length > 0 && <StepsTrail steps={msg.steps} />}
         {msg.content && (
-          <div className="rounded-2xl rounded-bl-sm bg-secondary px-4 py-2 text-sm whitespace-pre-wrap">
+          <div className="group relative rounded-2xl rounded-bl-sm bg-secondary px-4 py-2 pr-10 text-sm whitespace-pre-wrap">
             {msg.content}
+            <button
+              onClick={() =>
+                tts.speaking ? tts.stop() : tts.speak(msg.content)
+              }
+              className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground opacity-0 transition hover:bg-background hover:text-foreground group-hover:opacity-100"
+              title={tts.speaking ? "Stop" : "Speak"}
+            >
+              {tts.speaking ? (
+                <Square className="size-3.5" />
+              ) : (
+                <Volume2 className="size-3.5" />
+              )}
+            </button>
           </div>
         )}
       </div>
