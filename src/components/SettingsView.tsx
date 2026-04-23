@@ -117,6 +117,66 @@ export function SettingsView() {
         </div>
       </Card>
 
+      <Card className="space-y-4 p-4">
+        <div>
+          <h3 className="text-sm font-semibold">Voice</h3>
+          <p className="text-xs text-muted-foreground">
+            R2D2 speaks aloud using ElevenLabs. The key stays on the server.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="voice">Voice</Label>
+          <select
+            id="voice"
+            value={voice}
+            onChange={(e) => setVoice(e.target.value)}
+            className="flex h-9 w-full rounded-md border border-input bg-input px-3 py-1 text-sm"
+          >
+            {VOICE_OPTIONS.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center justify-between rounded-md border border-border p-3">
+          <div>
+            <Label htmlFor="auto" className="cursor-pointer">
+              Auto-speak every reply
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Plays R2D2's final answer as soon as it arrives.
+            </p>
+          </div>
+          <Switch id="auto" checked={auto} onCheckedChange={setAuto} />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              speak(
+                "At your service, Sir. Voice systems online and standing by.",
+                voice,
+              )
+            }
+            disabled={speaking}
+          >
+            {speaking ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Volume2 className="size-4" />
+            )}
+            Test voice
+          </Button>
+          {ttsError && (
+            <span className="text-xs text-destructive">{ttsError}</span>
+          )}
+        </div>
+      </Card>
+
       <Card className="space-y-3 p-4">
         <h3 className="text-sm font-semibold">Connection status</h3>
         {loading && <p className="text-xs text-muted-foreground">Checking…</p>}
