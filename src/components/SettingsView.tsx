@@ -9,12 +9,14 @@ import { useR2D2Health } from "@/hooks/useR2D2Health";
 import {
   VOICE_OPTIONS,
   getAutoSpeak,
+  getElevenKey,
   getVoiceId,
   setAutoSpeak,
+  setElevenKey,
   setVoiceId,
   useTTS,
 } from "@/hooks/useTTS";
-import { CheckCircle2, XCircle, Save, RefreshCw, Volume2, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Save, RefreshCw, Volume2, Loader2, ExternalLink, KeyRound, Eye, EyeOff } from "lucide-react";
 import { SafetyAndSchedulerCard } from "@/components/SafetyAndSchedulerCard";
 
 export function SettingsView() {
@@ -22,6 +24,8 @@ export function SettingsView() {
   const [model, setModelState] = useState(getModel());
   const [voice, setVoice] = useState(getVoiceId());
   const [auto, setAuto] = useState(getAutoSpeak());
+  const [elevenKey, setElevenKeyState] = useState(getElevenKey());
+  const [showKey, setShowKey] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const { health, connected, loading, error } = useR2D2Health(7000);
   const { speak, speaking, error: ttsError } = useTTS();
@@ -35,6 +39,7 @@ export function SettingsView() {
     setModel(model);
     setVoiceId(voice);
     setAutoSpeak(auto);
+    setElevenKey(elevenKey);
     setSavedAt(Date.now());
     // Refresh page-level state by reloading; cheap and reliable
     setTimeout(() => window.location.reload(), 400);
