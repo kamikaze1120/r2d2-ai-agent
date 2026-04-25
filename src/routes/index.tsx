@@ -1,20 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { ChatView } from "@/components/ChatView";
+import { JarvisHome } from "@/components/JarvisHome";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "R2D2 Control — Local AI Agent" },
+      { title: "R2D2 — Autonomous Business Engine" },
       {
         name: "description",
         content:
-          "Web control panel for R2D2, a local-first AI agent that runs on your laptop with Ollama.",
+          "JARVIS-style command center for the R2D2 autonomous digital product engine. Speak orders, get spoken replies, and let R2D2 run the business.",
       },
-      { property: "og:title", content: "R2D2 Control — Local AI Agent" },
+      {
+        property: "og:title",
+        content: "R2D2 — Autonomous Business Engine",
+      },
       {
         property: "og:description",
-        content: "Chat, run tools, and manage memory for your local R2D2 agent.",
+        content:
+          "Cinematic JARVIS interface for the R2D2 autonomous engine — voice, proactive questions, and a self-driving worker pool.",
       },
     ],
   }),
@@ -24,7 +28,7 @@ export const Route = createFileRoute("/")({
 function Page() {
   return (
     <AppShell>
-      <ChatView />
+      <JarvisHome />
     </AppShell>
   );
 }

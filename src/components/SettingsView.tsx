@@ -9,12 +9,14 @@ import { useR2D2Health } from "@/hooks/useR2D2Health";
 import {
   VOICE_OPTIONS,
   getAutoSpeak,
+  getElevenKey,
   getVoiceId,
   setAutoSpeak,
+  setElevenKey,
   setVoiceId,
   useTTS,
 } from "@/hooks/useTTS";
-import { CheckCircle2, XCircle, Save, RefreshCw, Volume2, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Save, RefreshCw, Volume2, Loader2, ExternalLink, KeyRound, Eye, EyeOff } from "lucide-react";
 import { SafetyAndSchedulerCard } from "@/components/SafetyAndSchedulerCard";
 
 export function SettingsView() {
@@ -22,6 +24,8 @@ export function SettingsView() {
   const [model, setModelState] = useState(getModel());
   const [voice, setVoice] = useState(getVoiceId());
   const [auto, setAuto] = useState(getAutoSpeak());
+  const [elevenKey, setElevenKeyState] = useState(getElevenKey());
+  const [showKey, setShowKey] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const { health, connected, loading, error } = useR2D2Health(7000);
   const { speak, speaking, error: ttsError } = useTTS();
@@ -35,6 +39,7 @@ export function SettingsView() {
     setModel(model);
     setVoiceId(voice);
     setAutoSpeak(auto);
+    setElevenKey(elevenKey);
     setSavedAt(Date.now());
     // Refresh page-level state by reloading; cheap and reliable
     setTimeout(() => window.location.reload(), 400);
@@ -122,7 +127,47 @@ export function SettingsView() {
         <div>
           <h3 className="text-sm font-semibold">Voice</h3>
           <p className="text-xs text-muted-foreground">
-            R2D2 speaks aloud using ElevenLabs. The key stays on the server.
+            R2D2 speaks JARVIS-style using ElevenLabs. Your key stays in your
+            browser and is sent server-side per request only.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="elevenkey" className="flex items-center gap-1.5">
+            <KeyRound className="size-3.5" /> ElevenLabs API key
+          </Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="elevenkey"
+              type={showKey ? "text" : "password"}
+              value={elevenKey}
+              onChange={(e) => setElevenKeyState(e.target.value)}
+              placeholder="sk_..."
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setShowKey((s) => !s)}
+              title={showKey ? "Hide" : "Show"}
+            >
+              {showKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            No key?{" "}
+            <a
+              href="https://elevenlabs.io/app/settings/api-keys"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-0.5 text-primary hover:underline"
+            >
+              Create one in ElevenLabs <ExternalLink className="size-3" />
+            </a>
+            . Stored locally in this browser only — never persisted on our
+            servers.
           </p>
         </div>
 

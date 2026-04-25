@@ -4,19 +4,31 @@ import { z } from "zod";
 const TTSInput = z.object({
   text: z.string().min(1).max(5000),
   voiceId: z.string().min(1).max(64).default("JBFqnCBsd6RMkjVDRZzb"), // George
+  /** Optional user-supplied ElevenLabs key. Overrides the platform secret. */
+  userKey: z.string().min(20).max(200).optional(),
 });
 
 /**
  * ElevenLabs TTS server function.
  * Returns base64-encoded MP3 audio so it can be sent over JSON safely.
- * The API key never leaves the server.
+ *
+ * Key resolution order:
+ *   1. user-supplied key from the browser (BYOK), if present
+ *   2. ELEVENLABS_API_KEY env var (platform secret)
+ *
+ * The user key never gets logged or persisted server-side — it's used once
+ * per request and discarded. Lovable Cloud handles HTTPS in transit.
  */
 export const synthesizeSpeech = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => TTSInput.parse(input))
   .handler(async ({ data }) => {
-    const apiKey = process.env.ELEVENLABS_API_KEY;
+    const apiKey = data.userKey || process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
-      throw new Error("ELEVENLABS_API_KEY is not configured");
+      return {
+        audio: null,
+        error:
+          "No ElevenLabs key configured. Add your API key in Settings → Voice.",
+      };
     }
 
     const res = await fetch(
@@ -43,8 +55,14 @@ export const synthesizeSpeech = createServerFn({ method: "POST" })
 
     if (!res.ok) {
       const err = await res.text();
-      console.error("ElevenLabs TTS error", res.status, err);
-      return { audio: null, error: `TTS failed (${res.status})` };
+      console.error("ElevenLabs TTS error", res.status, err.slice(0, 200));
+      return {
+        audio: null,
+        error:
+          res.status === 401
+            ? "ElevenLabs rejected the key. Check it in Settings."
+            : `TTS failed (${res.status})`,
+      };
     }
 
     const buf = await res.arrayBuffer();
