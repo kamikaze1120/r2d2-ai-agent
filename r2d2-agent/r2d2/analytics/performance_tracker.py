@@ -136,3 +136,38 @@ def daily_revenue(window_days: int = 30) -> list[dict]:
 
 
 init_db()
+
+
+def funnel(window_days: int = 30) -> dict:
+    cutoff = time.time() - window_days * 86400
+    with _conn() as c:
+        rows = c.execute(
+            "SELECT kind, COALESCE(SUM(quantity),0) AS q, "
+            "COALESCE(SUM(revenue),0) AS r FROM events "
+            "WHERE ts >= ? GROUP BY kind",
+            (cutoff,),
+        ).fetchall()
+    out = {"views": 0, "favorites": 0, "sales": 0, "revenue": 0.0}
+    for r in rows:
+        if r["kind"] == "view": out["views"] = int(r["q"])
+        elif r["kind"] == "favorite": out["favorites"] = int(r["q"])
+        elif r["kind"] == "sale":
+            out["sales"] = int(r["q"]); out["revenue"] = float(r["r"])
+    return out
+
+
+def revenue_by_niche(window_days: int = 30) -> list[dict]:
+    cutoff = time.time() - window_days * 86400
+    with _conn() as c:
+        rows = c.execute(
+            "SELECT niche_id, "
+            "COALESCE(SUM(CASE WHEN kind='sale' THEN revenue END),0) AS revenue, "
+            "COALESCE(SUM(CASE WHEN kind='sale' THEN quantity END),0) AS sales, "
+            "COALESCE(SUM(CASE WHEN kind='view' THEN quantity END),0) AS views "
+            "FROM events WHERE ts >= ? AND niche_id IS NOT NULL "
+            "GROUP BY niche_id ORDER BY revenue DESC",
+            (cutoff,),
+        ).fetchall()
+    return [{"niche_id": r["niche_id"], "revenue": float(r["revenue"] or 0),
+             "sales": int(r["sales"] or 0), "views": int(r["views"] or 0)}
+            for r in rows]
