@@ -7,7 +7,7 @@ from __future__ import annotations
 import asyncio
 import threading
 from typing import Awaitable, Callable
-from ..core import task_manager
+from ..core import task_manager, audit_log
 from ..memory import business_memory
 from .. import config
 from . import (research_agent, product_agent, listing_agent,
@@ -55,7 +55,6 @@ def _chain_after(task: dict, result: dict) -> None:
             "upload_product", {"product_id": pid, "platform": "etsy"},
             agent="upload_agent", priority=6, parent_id=task["id"],
         )
-        # Hybrid approval: low-confidence uploads need human OK.
         if confidence < config.APPROVAL_THRESHOLD:
             task_manager.needs_approval(
                 upload_task["id"],
@@ -64,6 +63,10 @@ def _chain_after(task: dict, result: dict) -> None:
                  "listing_preview": result.get("listing")},
                 confidence=confidence,
             )
+            audit_log.log("dispatcher", "approval.held",
+                          target=upload_task["id"], outcome="ok",
+                          detail={"confidence": confidence,
+                                  "threshold": config.APPROVAL_THRESHOLD})
     elif t == "upload_product" and result.get("ok") and result.get("auto_published"):
         pid = task["payload"].get("product_id")
         task_manager.create_task(
@@ -77,10 +80,19 @@ async def dispatch(task: dict) -> dict:
     if not handler:
         return {"ok": False, "error": f"no handler for {task['type']}"}
     if not _action_allowed(task["type"]):
+        audit_log.log("dispatcher", f"task.{task['type']}",
+                      target=task["id"], outcome="blocked",
+                      detail={"reason": "ACTION_ALLOWLIST"})
         return {"ok": False, "error": f"{task['type']} blocked by ACTION_ALLOWLIST"}
+    audit_log.log(task.get("agent") or "dispatcher", f"task.{task['type']}",
+                  target=task["id"], outcome="ok",
+                  detail={"payload": task.get("payload")})
     try:
         result = await handler(task)
     except Exception as e:
+        audit_log.log(task.get("agent") or "dispatcher",
+                      f"task.{task['type']}", target=task["id"],
+                      outcome="error", detail={"error": str(e)})
         return {"ok": False, "error": str(e)}
     return result
 
@@ -123,10 +135,12 @@ def start_worker() -> None:
     _stop.clear()
     _worker_thread = threading.Thread(target=_worker_loop, daemon=True)
     _worker_thread.start()
+    audit_log.log("user", "automation.worker_start", outcome="ok")
 
 
 def stop_worker() -> None:
     _stop.set()
+    audit_log.log("user", "automation.worker_stop", outcome="ok")
 
 
 def worker_status() -> dict:
