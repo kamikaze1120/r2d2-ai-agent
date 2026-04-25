@@ -127,7 +127,7 @@ export function SettingsView() {
         <div>
           <h3 className="text-sm font-semibold">Voice</h3>
           <p className="text-xs text-muted-foreground">
-            R2D2 speaks JARVIS-style using ElevenLabs. Your key stays in your
+            R2D2 speaks R2D2-style using ElevenLabs. Your key stays in your
             browser and is sent server-side per request only.
           </p>
         </div>

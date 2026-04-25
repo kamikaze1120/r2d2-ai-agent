@@ -3,7 +3,7 @@ import { useR2D2Health } from "@/hooks/useR2D2Health";
 import { cn } from "@/lib/utils";
 import { Activity, MessageSquare, Wrench, Brain, Settings, ListChecks, Package, BarChart3, ShieldCheck, Megaphone, ScrollText, Sparkles } from "lucide-react";
 import { AutomationToggle } from "@/components/AutomationToggle";
-import { JarvisAutonomousToggle } from "@/components/JarvisAutonomousToggle";
+import { R2D2AutonomousToggle } from "@/components/R2D2AutonomousToggle";
 
 const NAV = [
   { to: "/", label: "Cockpit", icon: Sparkles },
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <JarvisAutonomousToggle />
+            <R2D2AutonomousToggle />
             <AutomationToggle />
             <StatusPill connected={connected} loading={loading} error={error} health={health} />
           </div>

@@ -5,7 +5,7 @@ const VOICE_KEY = "r2d2.voiceId";
 const AUTO_KEY = "r2d2.autoSpeak";
 const ELEVEN_KEY = "r2d2.elevenLabsKey";
 
-const DEFAULT_VOICE = "JBFqnCBsd6RMkjVDRZzb"; // George — JARVIS-like
+const DEFAULT_VOICE = "JBFqnCBsd6RMkjVDRZzb"; // George — R2D2 voice
 
 export const VOICE_OPTIONS: { id: string; label: string }[] = [
   { id: "JBFqnCBsd6RMkjVDRZzb", label: "George — refined British (recommended)" },
@@ -43,7 +43,7 @@ export function setElevenKey(k: string) {
 /**
  * --- Live amplitude pub/sub ---
  *
- * Single shared signal so the JARVIS globe (and any other visualizer) can
+ * Single shared signal so the R2D2 globe (and any other visualizer) can
  * reflect whatever voice is playing right now, no matter which component
  * triggered the speech.
  */
