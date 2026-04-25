@@ -29,16 +29,25 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "R2D2 — Local-first AI Control" },
+      {
+        name: "description",
+        content:
+          "R2D2 is a local-first AI agent and autonomous business engine. Talk, command, and let it run.",
+      },
+      { name: "author", content: "R2D2" },
+      { property: "og:title", content: "R2D2 — Local-first AI Control" },
+      {
+        property: "og:description",
+        content:
+          "R2D2 is a local-first AI agent and autonomous business engine.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", href: "/r2d2-logo.png" },
       {
         rel: "stylesheet",
         href: appCss,
