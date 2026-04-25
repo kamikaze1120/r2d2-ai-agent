@@ -195,7 +195,7 @@ R2D2's brain is not a single model — it's a **dispatcher** that routes work to
 | 🧭 **Strategy** | `strategy_agent.py` | Reviews performance, suggests pivots |
 | 🚀 **Upload** | `upload_agent.py` | Publishes to Etsy / Shopify with safety checks |
 
-### How they load
+### How they load...
 
 Sub-agents are **auto-discovered** at boot. When you run `./run.sh`, the dispatcher imports every module in `r2d2/agents/` and registers it. You should see something like this in the agent terminal:
 
