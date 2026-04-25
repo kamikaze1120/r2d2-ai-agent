@@ -15,6 +15,7 @@ import {
   useTTS,
 } from "@/hooks/useTTS";
 import { CheckCircle2, XCircle, Save, RefreshCw, Volume2, Loader2 } from "lucide-react";
+import { SafetyAndSchedulerCard } from "@/components/SafetyAndSchedulerCard";
 
 export function SettingsView() {
   const [base, setBase] = useState(getApiBase());
@@ -200,6 +201,8 @@ export function SettingsView() {
           </ul>
         )}
       </Card>
+
+      <SafetyAndSchedulerCard />
 
       <Card className="space-y-2 p-4">
         <h3 className="text-sm font-semibold">Quick start</h3>
