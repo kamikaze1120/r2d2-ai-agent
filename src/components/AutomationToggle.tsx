@@ -40,7 +40,12 @@ export function AutomationToggle() {
       variant={on ? "default" : "outline"}
       onClick={toggle}
       disabled={busy || !status}
-      className={cn("h-8 gap-1.5", on && "bg-success text-success-foreground hover:bg-success/90")}
+      className={cn(
+        "h-8 gap-1.5 rounded-full border-border/60 transition-all",
+        on
+          ? "border-transparent bg-gradient-to-r from-success to-success/80 text-success-foreground shadow-[0_0_24px_-4px_var(--color-success)] hover:opacity-95"
+          : "bg-secondary/40 backdrop-blur hover:bg-secondary/70",
+      )}
     >
       {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Power className="size-3.5" />}
       {on ? "Auto: ON" : "Auto: OFF"}
