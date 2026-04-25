@@ -15,6 +15,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as MemoryRouteImport } from './routes/memory'
 import { Route as MarketingRouteImport } from './routes/marketing'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
@@ -50,6 +51,11 @@ const MarketingRoute = MarketingRouteImport.update({
   path: '/marketing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuditRoute = AuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/approvals': typeof ApprovalsRoute
   '/audit': typeof AuditRoute
+  '/chat': typeof ChatRoute
   '/marketing': typeof MarketingRoute
   '/memory': typeof MemoryRoute
   '/products': typeof ProductsRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/approvals': typeof ApprovalsRoute
   '/audit': typeof AuditRoute
+  '/chat': typeof ChatRoute
   '/marketing': typeof MarketingRoute
   '/memory': typeof MemoryRoute
   '/products': typeof ProductsRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/approvals': typeof ApprovalsRoute
   '/audit': typeof AuditRoute
+  '/chat': typeof ChatRoute
   '/marketing': typeof MarketingRoute
   '/memory': typeof MemoryRoute
   '/products': typeof ProductsRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/audit'
+    | '/chat'
     | '/marketing'
     | '/memory'
     | '/products'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/audit'
+    | '/chat'
     | '/marketing'
     | '/memory'
     | '/products'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/approvals'
     | '/audit'
+    | '/chat'
     | '/marketing'
     | '/memory'
     | '/products'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   ApprovalsRoute: typeof ApprovalsRoute
   AuditRoute: typeof AuditRoute
+  ChatRoute: typeof ChatRoute
   MarketingRoute: typeof MarketingRoute
   MemoryRoute: typeof MemoryRoute
   ProductsRoute: typeof ProductsRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/audit': {
       id: '/audit'
       path: '/audit'
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   ApprovalsRoute: ApprovalsRoute,
   AuditRoute: AuditRoute,
+  ChatRoute: ChatRoute,
   MarketingRoute: MarketingRoute,
   MemoryRoute: MemoryRoute,
   ProductsRoute: ProductsRoute,
@@ -250,3 +271,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
