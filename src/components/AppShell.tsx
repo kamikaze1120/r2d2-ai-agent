@@ -1,10 +1,15 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useR2D2Health } from "@/hooks/useR2D2Health";
 import { cn } from "@/lib/utils";
-import { Activity, MessageSquare, Wrench, Brain, Settings } from "lucide-react";
+import { Activity, MessageSquare, Wrench, Brain, Settings, ListChecks, Package, BarChart3, ShieldCheck } from "lucide-react";
+import { AutomationToggle } from "@/components/AutomationToggle";
 
 const NAV = [
   { to: "/", label: "Chat", icon: MessageSquare },
+  { to: "/tasks", label: "Tasks", icon: ListChecks },
+  { to: "/products", label: "Products", icon: Package },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/approvals", label: "Approvals", icon: ShieldCheck },
   { to: "/tools", label: "Tools", icon: Wrench },
   { to: "/memory", label: "Memory", icon: Brain },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -52,7 +57,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <StatusPill connected={connected} loading={loading} error={error} health={health} />
+          <div className="flex items-center gap-2">
+            <AutomationToggle />
+            <StatusPill connected={connected} loading={loading} error={error} health={health} />
+          </div>
         </div>
         <nav className="flex items-center gap-1 overflow-x-auto border-t border-border px-3 py-2 md:hidden">
           {NAV.map((item) => {
