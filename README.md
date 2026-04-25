@@ -252,6 +252,96 @@ Missing keys = those tools simply stay dormant. R2D2 will not crash.
 
 ---
 
+### ✅ Sub-agent verification checklist
+
+Use this checklist after every fresh clone, dependency change, or new sub-agent file to confirm the dispatcher is loading everything correctly.
+
+#### 1 · Set the env vars (only those you need)
+
+Copy this block into your terminal **before** booting the agent. Anything you leave unset just disables that platform — the agent still boots.
+
+```bash
+# ---- Core (required) ----
+export R2D2_HOST=127.0.0.1                       # bind address (use 0.0.0.0 for LAN)
+export R2D2_PORT=8000                            # API port
+export R2D2_MODEL=llama3.2                       # any model you've `ollama pull`-ed
+export OLLAMA_BASE_URL=http://localhost:11434    # default Ollama endpoint
+
+# ---- Optional safety ----
+export R2D2_SHELL_ALLOWLIST=ls,cat,git,echo      # restrict shell tool
+export R2D2_APPROVAL_MODE=hybrid                 # hybrid | always | never
+
+# ---- Optional voice (server-side fallback only; users can BYOK in panel) ----
+export ELEVENLABS_API_KEY=sk_...
+
+# ---- Platform integrations (only set the ones you'll use) ----
+export ETSY_CLIENT_ID=...
+export ETSY_REFRESH_TOKEN=...
+export SHOPIFY_STORE=mystore.myshopify.com
+export SHOPIFY_ADMIN_TOKEN=shpat_...
+export PINTEREST_ACCESS_TOKEN=...
+```
+
+> 💡 On Windows PowerShell, swap `export FOO=bar` for `$env:FOO="bar"`.
+
+#### 2 · Boot the agent
+
+```bash
+cd r2d2-agent
+./run.sh
+```
+
+#### 3 · Watch the boot log — you should see all 6 sub-agents
+
+In the agent terminal, look for these lines (order may vary):
+
+```
+[R2D2] Loaded sub-agent: research
+[R2D2] Loaded sub-agent: product
+[R2D2] Loaded sub-agent: listing
+[R2D2] Loaded sub-agent: marketing
+[R2D2] Loaded sub-agent: strategy
+[R2D2] Loaded sub-agent: upload
+[R2D2] Dispatcher ready · 6 agents online
+R2D2 Business Engine starting on http://localhost:8000
+```
+
+#### 4 · Verify over HTTP (one command)
+
+In a **second** terminal:
+
+```bash
+curl -s http://localhost:8000/health | python3 -m json.tool
+```
+
+✅ A healthy response looks like this:
+
+```json
+{
+  "ok": true,
+  "ollama": { "ok": true, "models": ["llama3.2"] },
+  "agents": ["research", "product", "listing", "marketing", "strategy", "upload"],
+  "tools": ["read_file", "write_file", "shell", "web_search", "remember", "recall", "etsy", "shopify", "pinterest", "file_generator"]
+}
+```
+
+#### 5 · Tick every box
+
+| ✅ | Check | What to do if it fails |
+|---|---|---|
+| ☐ | `curl /health` returns HTTP 200 | Agent isn't running — re-run `./run.sh` and read the trace |
+| ☐ | `ollama.ok` is `true` | Run `ollama serve` in another terminal |
+| ☐ | `ollama.models` contains your `R2D2_MODEL` | Run `ollama pull <model>` |
+| ☐ | `agents` array has all **6** names | Inspect the boot log for `ImportError`; re-run `pip install -r requirements.txt` |
+| ☐ | `tools` includes the platforms you set env vars for | Re-export the env vars in the **same shell** before `./run.sh` |
+| ☐ | Web panel status pill turns 🟢 **Online** | Check **Settings → API base URL** matches `R2D2_HOST:R2D2_PORT` |
+| ☐ | **Tools → Agents** in the panel lists all 6 | Hard-refresh the browser (Ctrl/Cmd + Shift + R) |
+| ☐ | Sending a chat triggers a `dispatcher` audit entry | Open **Audit** in the panel after sending one message |
+
+If every box is ticked, R2D2 is fully online and ready to take orders, sir.
+
+---
+
 ## 🎙️ Give R2D2 a voice (ElevenLabs)
 
 1. Grab a free key at <https://elevenlabs.io>.
