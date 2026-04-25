@@ -1,10 +1,4 @@
-"""FastAPI HTTP API — exposes R2D2 to the web control panel.
-
-Run:
-    python -m r2d2.server
-or
-    uvicorn r2d2.server:app --host 0.0.0.0 --port 8000
-"""
+"""FastAPI HTTP API — exposes R2D2 to the web control panel."""
 from __future__ import annotations
 import json
 from fastapi import FastAPI, HTTPException
@@ -14,14 +8,14 @@ from pydantic import BaseModel
 from . import config, memory as legacy_memory, tools
 from .executor import run_agent
 from .llm import OllamaClient
-from .core import task_manager, scheduler as sched_mod
+from .core import task_manager, scheduler as sched_mod, audit_log
 from .memory import business_memory
 from .analytics import performance_tracker
-from .agents import dispatcher
-from .tools_pkg import etsy_tool, shopify_tool
+from .agents import dispatcher, marketing_agent
+from .tools_pkg import etsy_tool, shopify_tool, pinterest_tool
 
 
-app = FastAPI(title="R2D2 Business Engine", version="0.2.0")
+app = FastAPI(title="R2D2 Business Engine", version="0.3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,7 +50,26 @@ class TaskCreate(BaseModel):
     priority: int = 0
 
 
-# ----- Health / status -----
+class ListingPatch(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    price_usd: float | None = None
+    confidence: float | None = None
+
+
+class SafetyPatch(BaseModel):
+    dry_run: bool | None = None
+    approval_threshold: float | None = None
+    action_allowlist: list[str] | None = None
+
+
+class JobPatch(BaseModel):
+    interval_seconds: int | None = None
+    enabled: bool | None = None
+
+
+# ----- Health -----
 
 @app.get("/health")
 async def health():
@@ -73,7 +86,7 @@ async def health():
         await client.aclose()
     return {
         "ok": True,
-        "version": "0.2.0",
+        "version": "0.3.0",
         "goal": config.SYSTEM_GOAL,
         "ollama": {"ok": ollama_ok, "host": config.OLLAMA_HOST, "models": models},
         "default_model": config.DEFAULT_MODEL,
@@ -81,8 +94,10 @@ async def health():
         "platforms": {
             "etsy": etsy_tool.configured(),
             "shopify": shopify_tool.configured(),
+            "pinterest": pinterest_tool.configured(),
         },
         "approval_threshold": config.APPROVAL_THRESHOLD,
+        "dry_run": config.DRY_RUN,
         "automation": dispatcher.worker_status(),
         "scheduler": sched_mod.scheduler.status(),
     }
@@ -107,7 +122,7 @@ def list_tools():
     ]}
 
 
-# ----- Sessions -----
+# ----- Sessions / legacy memory -----
 
 @app.get("/sessions")
 def get_sessions():
@@ -134,8 +149,6 @@ def del_session(sid: str):
     return {"ok": True}
 
 
-# ----- Long-term memory -----
-
 @app.get("/memories")
 def get_memories():
     return {"memories": legacy_memory.list_memories()}
@@ -154,7 +167,7 @@ def del_memory(mid: str):
 
 
 # ============================================================
-# BUSINESS ENGINE — tasks, products, niches, analytics, automation
+# BUSINESS ENGINE
 # ============================================================
 
 # --- Tasks ---
@@ -185,6 +198,7 @@ def approve(tid: str):
     t = task_manager.approve_task(tid)
     if not t:
         raise HTTPException(404, "Not found")
+    audit_log.log("user", "approval.approve", target=tid, outcome="ok")
     return t
 
 
@@ -193,6 +207,7 @@ def reject(tid: str):
     t = task_manager.reject_task(tid)
     if not t:
         raise HTTPException(404, "Not found")
+    audit_log.log("user", "approval.reject", target=tid, outcome="ok")
     return t
 
 
@@ -203,7 +218,7 @@ def del_task(tid: str):
     return {"ok": True}
 
 
-# --- Niches & products (business memory) ---
+# --- Niches & products ---
 
 @app.get("/niches")
 def list_niches(status: str | None = None):
@@ -227,14 +242,67 @@ def download_product_file(pid: str):
     return FileResponse(p["file_path"])
 
 
+@app.patch("/products/{pid}/listing")
+def patch_listing(pid: str, body: ListingPatch):
+    p = next((x for x in business_memory.list_products()
+              if x["id"] == pid), None)
+    if not p:
+        raise HTTPException(404, "Not found")
+    listing = dict(p.get("listing")
+                   or p.get("metadata", {}).get("listing")
+                   or {})
+    patch = body.model_dump(exclude_none=True)
+    if "tags" in patch:
+        patch["tags"] = [t[:20] for t in patch["tags"]][:13]
+    listing.update(patch)
+    business_memory.update_product(pid, listing=listing)
+    audit_log.log("user", "listing.edit", target=pid, outcome="ok",
+                  detail={"fields": list(patch.keys())})
+    return {"ok": True, "listing": listing}
+
+
 # --- Analytics ---
 
 @app.get("/analytics/overview")
 def analytics_overview(window_days: int = 30):
+    niche_rev = performance_tracker.revenue_by_niche(window_days)
+    niches_by_id = {n["id"]: n for n in business_memory.list_niches()}
+    enriched = [{**r, "name": niches_by_id.get(r["niche_id"], {}).get("name", r["niche_id"])}
+                for r in niche_rev]
     return {
         "overview": performance_tracker.overview(window_days),
         "daily": performance_tracker.daily_revenue(window_days),
+        "funnel": performance_tracker.funnel(window_days),
+        "by_niche": enriched,
     }
+
+
+# --- Marketing queues ---
+
+@app.get("/marketing/queue/{kind}")
+def marketing_queue(kind: str):
+    if kind not in ("pinterest", "tiktok"):
+        raise HTTPException(400, "kind must be pinterest|tiktok")
+    return {"items": marketing_agent.list_queue(kind),
+            "pinterest_configured": pinterest_tool.configured()}
+
+
+@app.post("/marketing/queue/{kind}/{item_id}/posted")
+def mark_posted(kind: str, item_id: str):
+    if not marketing_agent.mark_posted(kind, item_id):
+        raise HTTPException(404, "Not found")
+    audit_log.log("user", f"marketing.{kind}.posted", target=item_id,
+                  outcome="ok")
+    return {"ok": True}
+
+
+# --- Audit log ---
+
+@app.get("/audit")
+def get_audit(limit: int = 200, action: str | None = None,
+              outcome: str | None = None):
+    return {"entries": audit_log.list_entries(limit=limit, action=action,
+                                              outcome=outcome)}
 
 
 # --- Automation control ---
@@ -246,6 +314,7 @@ def automation_status():
         "scheduler": sched_mod.scheduler.status(),
         "approval_threshold": config.APPROVAL_THRESHOLD,
         "action_allowlist": config.ACTION_ALLOWLIST,
+        "dry_run": config.DRY_RUN,
     }
 
 
@@ -271,7 +340,33 @@ def automation_trigger(job_name: str):
     return {"ok": True, "triggered": job_name}
 
 
-# ----- Chat (streaming SSE-style NDJSON) -----
+@app.patch("/automation/jobs/{job_name}")
+def patch_job(job_name: str, body: JobPatch):
+    if body.interval_seconds is not None:
+        sched_mod.scheduler.update_interval(job_name, body.interval_seconds)
+    if body.enabled is not None:
+        sched_mod.scheduler.set_enabled(job_name, body.enabled)
+    return automation_status()
+
+
+@app.patch("/automation/safety")
+def patch_safety(body: SafetyPatch):
+    if body.dry_run is not None:
+        config.set_dry_run(body.dry_run)
+        audit_log.log("user", "safety.dry_run", outcome="ok",
+                      detail={"dry_run": body.dry_run})
+    if body.approval_threshold is not None:
+        config.set_approval_threshold(body.approval_threshold)
+        audit_log.log("user", "safety.approval_threshold", outcome="ok",
+                      detail={"value": config.APPROVAL_THRESHOLD})
+    if body.action_allowlist is not None:
+        config.set_action_allowlist(body.action_allowlist)
+        audit_log.log("user", "safety.allowlist", outcome="ok",
+                      detail={"items": config.ACTION_ALLOWLIST})
+    return automation_status()
+
+
+# ----- Chat -----
 
 @app.post("/chat")
 async def chat(req: ChatRequest):
@@ -287,13 +382,11 @@ async def chat(req: ChatRequest):
     return StreamingResponse(gen(), media_type="application/x-ndjson")
 
 
-# ----- Bootstrap scheduler & worker -----
+# ----- Bootstrap -----
 
 @app.on_event("startup")
 def _startup() -> None:
     sched_mod.register_default_jobs()
-    # Worker starts on user opt-in via /automation/start.
-    # Pre-register but do not auto-enable scheduler.
 
 
 def main():
