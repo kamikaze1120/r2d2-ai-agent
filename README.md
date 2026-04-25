@@ -1,77 +1,113 @@
 <div align="center">
 
-<img src="docs/r2d2-hero.png" alt="R2D2 astromech droid" width="240" />
+<img src="docs/r2d2-hero.png" alt="R2D2 astromech droid" width="220" />
 
 # R2D2
 
-### Your local-first AI butler — runs on your laptop, answers to **R2D2**.
+### Your local-first AI butler & autonomous business engine.
 
-[![Made by Mohammed](https://img.shields.io/badge/Made%20by-Mohammed-0a84ff?style=for-the-badge)](#)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](#)
-[![Ollama](https://img.shields.io/badge/LLM-Ollama-000?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.com)
-[![ElevenLabs Voice](https://img.shields.io/badge/Voice-ElevenLabs-7c3aed?style=for-the-badge)](https://elevenlabs.io)
-[![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](#)
+<br/>
+
+[![Made by Mohammed](https://img.shields.io/badge/Made%20by-Mohammed-22d3ee?style=for-the-badge&labelColor=0f172a)](#)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white&labelColor=0f172a)](#)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black&labelColor=0f172a)](#)
+[![Ollama](https://img.shields.io/badge/LLM-Ollama-000?style=for-the-badge&logo=ollama&logoColor=white&labelColor=0f172a)](https://ollama.com)
+[![ElevenLabs](https://img.shields.io/badge/Voice-ElevenLabs-7c3aed?style=for-the-badge&labelColor=0f172a)](https://elevenlabs.io)
+[![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=0f172a)](#)
+
+<br/>
+
+```
+"At your service, sir."  —  R2D2
+```
 
 </div>
 
 ---
 
-> *"At your service, Sir."* — R2D2
+## 🌌 What is R2D2?
 
-R2D2 is a **two-piece** project: a local Python agent that does the actual thinking, and a polished React control panel that lets you talk to it from any browser. Free models, your hardware, your data.
+R2D2 is a **two-piece** project:
 
-<table>
-<tr>
-<td width="50%" valign="top">
+| | |
+|---|---|
+| 🧠 **Agent core** (`r2d2-agent/`) | A local Python brain. Plans, calls tools, remembers things, and orchestrates a fleet of **sub-agents** (research, product, listing, marketing, strategy, upload). Runs on **your laptop**. |
+| 🖥️ **Control panel** (`src/`) | A polished React cockpit. Stream chats, watch reasoning, toggle autonomous mode, and hear R2D2 speak in a refined voice. Runs in **the browser**. |
 
-### 🧠 Agent core
-**Python · FastAPI · Ollama**
-Lives in `r2d2-agent/`. Runs on **your laptop**.
-Plans, calls tools, remembers things — locally.
-
-</td>
-<td width="50%" valign="top">
-
-### 🖥️ Control panel
-**React · TanStack Start · Tailwind**
-Lives in `src/`. Runs in **the browser**.
-Chats, streams reasoning, speaks replies aloud.
-
-</td>
-</tr>
-</table>
+**Free models · your hardware · your data.** No cloud LLMs unless *you* wire one in.
 
 ---
 
 ## ✨ Highlights
 
-- 🔒 **100% local inference** — Ollama runs the model on your machine. No cloud LLM calls.
-- 🛠️ **Pluggable tools** — files, shell, web search, long-term memory. Add your own in ~10 lines.
-- 🧩 **Streaming agent loop** — watch R2D2 think → call tool → observe → answer, live.
-- 🎙️ **JARVIS-style voice** — refined British TTS via ElevenLabs (toggleable, with per-message replay).
-- 📱 **Reach it anywhere** — expose with Cloudflare Tunnel or ngrok and control it from your phone.
-- 🎨 **Beautiful UI** — dark, minimal, semantic-token themed. No CSS spaghetti.
+- 🔒 **100% local inference** — Ollama runs the model on your machine.
+- 🧩 **Multi-agent orchestration** — 6 specialised sub-agents, dispatched automatically.
+- 🛠️ **Pluggable tools** — files, shell, web search, Etsy/Shopify/Pinterest, long-term memory.
+- 🎙️ **Cinematic voice** — bring your own ElevenLabs key, stored in your browser.
+- 🌠 **Live cockpit UI** — animated 3D orb, aurora background, collapsible sidebar.
+- 🤖 **Autonomous mode** — R2D2 narrates milestones, asks proactive questions, and runs scheduled jobs.
+- 📱 **Reach it anywhere** — expose with Cloudflare Tunnel and control from your phone.
 
 ---
 
-## 🚀 Quick start
+## 🚀 Quick start (5 minutes)
 
-<details open>
-<summary><b>1 · Install Ollama and pull a model (one time)</b></summary>
+> Even if you've never touched Python or Node before, follow these steps in order. You'll be talking to R2D2 by step 5.
+
+### 📋 Prerequisites
+
+| Tool | Why | Install |
+|---|---|---|
+| **Git** | To clone the repo | <https://git-scm.com/downloads> |
+| **Python 3.10+** | The agent runs on it | <https://www.python.org/downloads/> *(check "Add Python to PATH" on Windows)* |
+| **Node.js 20+** | Builds the web panel | <https://nodejs.org/en/download> |
+| **Ollama** | Runs the local LLM | <https://ollama.com/download> |
+
+> 💡 **Verify**: open a terminal and run `python3 --version`, `node --version`, `git --version`, `ollama --version`. If any are missing, install them first.
+
+---
+
+### 🪜 Step 1 — Clone the repo
 
 ```bash
-curl -fsSL https://ollama.com/install.sh | sh   # macOS / Linux
-ollama pull llama3.2                            # ~2 GB, recommended default
-# alternatives:  ollama pull mistral  ·  ollama pull phi3
+git clone https://github.com/<your-username>/r2d2.git
+cd r2d2
 ```
 
-> **Windows:** download from <https://ollama.com/download>.
+---
 
-</details>
+### 🪜 Step 2 — Pull a local model with Ollama
+
+In a **new terminal**, install a model on your machine:
+
+```bash
+ollama pull llama3.2          # ⭐ recommended default — ~2 GB, fast
+# alternatives:
+# ollama pull mistral         # ~4 GB, stronger reasoning
+# ollama pull phi3            # ~2 GB, great on weak hardware
+# ollama pull qwen2.5         # ~4 GB, excellent tool use
+```
+
+Make sure Ollama is running in the background:
+
+```bash
+ollama serve     # usually auto-starts; only run if you see "connection refused"
+```
+
+✅ Test it:
+
+```bash
+ollama run llama3.2 "say hello"
+```
+
+---
+
+### 🪜 Step 3 — Boot the R2D2 agent (Python)
+
+Open a terminal in the project root and run:
 
 <details open>
-<summary><b>2 · Boot the R2D2 agent on your laptop</b></summary>
+<summary><b>🍎 macOS / 🐧 Linux</b></summary>
 
 ```bash
 cd r2d2-agent
@@ -79,131 +115,257 @@ chmod +x run.sh
 ./run.sh
 ```
 
-This builds a venv, installs deps, and starts the API on `http://localhost:8000`. Verify:
+</details>
+
+<details>
+<summary><b>🪟 Windows (PowerShell)</b></summary>
+
+```powershell
+cd r2d2-agent
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -r requirements.txt
+python -m r2d2.server
+```
+
+</details>
+
+The script:
+
+1. Creates a virtual environment (`.venv/`)
+2. Installs all Python dependencies (FastAPI, Pydantic, httpx, reportlab, Pillow, …)
+3. **Loads all sub-agents automatically** (see [Sub-agents](#-sub-agents) below)
+4. Starts the FastAPI server at **http://localhost:8000**
+
+✅ Verify in another terminal:
 
 ```bash
 curl http://localhost:8000/health
 ```
 
-</details>
+You should see `{"ok": true, "ollama": {...}, "agents": [...]}`.
 
-<details open>
-<summary><b>3 · Open the web control panel</b></summary>
-
-Open the published URL (or the Lovable preview), then go to **Settings**:
-
-| Scenario | Action |
-|---|---|
-| Same machine | Leave API base URL as `http://localhost:8000` |
-| Phone / different machine | Run a tunnel ↓ and paste the URL |
-
-```bash
-cloudflared tunnel --url http://localhost:8000
-# or:
-ngrok http 8000
-```
-
-Pick a model, click **Save & reconnect**, and start chatting.
-
-</details>
+> 💡 **Keep this terminal running.** The agent must stay alive while you use the panel.
 
 ---
 
-## 🎙️ Give R2D2 a voice
+### 🪜 Step 4 — Boot the web control panel (React)
 
-Open **Settings → Voice** and pick a profile. Recommended: **George — refined British** (the JARVIS one).
+Open **another** terminal in the project root:
+
+```bash
+# install JavaScript dependencies (first run only)
+npm install
+# or if you prefer bun:  bun install
+
+# start the dev server
+npm run dev
+```
+
+The panel will open at **http://localhost:5173** (or whatever port it announces).
+
+---
+
+### 🪜 Step 5 — First contact
+
+1. Open the panel in your browser.
+2. Go to **Settings** in the sidebar.
+3. Confirm:
+   - **API base URL** = `http://localhost:8000`
+   - **Model** = the one you pulled (e.g. `llama3.2`)
+4. Click **Save & reconnect**. The status pill should turn 🟢 **Online**.
+5. (Optional) Add your **ElevenLabs API key** under *Settings → Voice* to give R2D2 a real voice.
+6. Head to the **Cockpit**, type a command, hit ⏎.
+
+🎉 R2D2 is now at your service.
+
+---
+
+## 🤖 Sub-agents
+
+R2D2's brain is not a single model — it's a **dispatcher** that routes work to specialised sub-agents living in `r2d2-agent/r2d2/agents/`.
+
+| Sub-agent | File | What it owns |
+|---|---|---|
+| 🔭 **Research** | `research_agent.py` | Niche scouting, trend analysis, keyword discovery |
+| 🎨 **Product** | `product_agent.py` | Generates digital products (PDFs, ebooks, sticker packs, wall art) |
+| 📝 **Listing** | `listing_agent.py` | Writes SEO titles, descriptions, tags |
+| 📣 **Marketing** | `marketing_agent.py` | Pinterest pins, social copy, email blurbs |
+| 🧭 **Strategy** | `strategy_agent.py` | Reviews performance, suggests pivots |
+| 🚀 **Upload** | `upload_agent.py` | Publishes to Etsy / Shopify with safety checks |
+
+### How they load
+
+Sub-agents are **auto-discovered** at boot. When you run `./run.sh`, the dispatcher imports every module in `r2d2/agents/` and registers it. You should see something like this in the agent terminal:
+
+```
+[R2D2] Loaded sub-agent: research
+[R2D2] Loaded sub-agent: product
+[R2D2] Loaded sub-agent: listing
+[R2D2] Loaded sub-agent: marketing
+[R2D2] Loaded sub-agent: strategy
+[R2D2] Loaded sub-agent: upload
+[R2D2] Dispatcher ready · 6 agents online
+R2D2 Business Engine starting on http://localhost:8000
+```
+
+### Add your own sub-agent
+
+1. Create `r2d2-agent/r2d2/agents/my_agent.py`:
+
+   ```python
+   from r2d2.agents._llm import call_llm
+
+   def run(task: dict) -> dict:
+       """Called by the dispatcher when a task is routed here."""
+       prompt = f"Do the thing for: {task['input']}"
+       return {"ok": True, "output": call_llm(prompt)}
+   ```
+
+2. Restart `./run.sh`. The dispatcher picks it up automatically — no config edits.
+
+3. The agent will now appear in **Tools → Agents** in the web panel.
+
+### Connect platform integrations
+
+The official platform clients live in `r2d2-agent/r2d2/tools_pkg/`:
+
+- `etsy_tool.py` — OAuth 2.0 PKCE, listing publish, image upload
+- `shopify_tool.py` — Admin REST API, product + collection assignment
+- `pinterest_tool.py` — API v5, autonomous pinning
+- `analytics_tool.py` — performance tracking & reports
+- `file_generator.py` — PDF / PNG / ebook generation
+
+Set the corresponding env vars before launching `./run.sh`:
+
+```bash
+export ETSY_CLIENT_ID=...
+export ETSY_REFRESH_TOKEN=...
+export SHOPIFY_STORE=mystore.myshopify.com
+export SHOPIFY_ADMIN_TOKEN=...
+export PINTEREST_ACCESS_TOKEN=...
+./run.sh
+```
+
+Missing keys = those tools simply stay dormant. R2D2 will not crash.
+
+---
+
+## 🎙️ Give R2D2 a voice (ElevenLabs)
+
+1. Grab a free key at <https://elevenlabs.io>.
+2. In the panel, open **Settings → Voice**.
+3. Paste your key and pick a profile. Recommended: **George — refined British**.
 
 | Voice | Vibe |
 |---|---|
-| **George** | Deep, refined British. Calm. Butler-like. |
+| **George** ⭐ | Deep, refined British. Calm. Butler-like. |
 | Brian | Warm American baritone. |
 | Charlie | Crisp, polished. Younger. |
 | Daniel | Authoritative British. |
 
-Toggle **Auto-speak** to have R2D2 read every reply aloud, or hit the speaker icon on any message.
+> 🔑 The key is stored in your **browser** (localStorage) and forwarded server-side per request. It never gets baked into the code.
 
-> 🔑 Voice runs through a server function so your `ELEVENLABS_API_KEY` never touches the browser.
-
----
-
-## 🧰 Built-in tools
-
-| Tool | What it does |
-|---|---|
-| `read_file` · `write_file` · `list_dir` | File ops, sandboxed to the workspace |
-| `shell` | Run shell commands (with optional allowlist) |
-| `web_search` | DuckDuckGo, no API key required |
-| `remember` · `recall` | Long-term memory (JSON on disk) |
-| `final_answer` | Return the result to you |
-
-The loop: **plan → call tool → observe → repeat → final_answer**.
-
-📂 Workspace: `~/.r2d2/workspace`  · 🧠 Memory: `~/.r2d2/long_term_memory.json`
+Toggle **Auto-speak** so R2D2 reads every reply aloud, or hit the speaker icon on any single message.
 
 ---
 
-## 🧪 Add your own tool
+## 🌐 Reach R2D2 from your phone
 
-Edit `r2d2-agent/r2d2/tools.py`:
+The panel must reach the agent's HTTP API. If they're on different devices, run a tunnel:
 
-```python
-def _my_tool(args):
-    return f"Result for {args['x']}"
+```bash
+# Cloudflare (free, recommended)
+cloudflared tunnel --url http://localhost:8000
 
-register({
-    "name": "my_tool",
-    "description": "What this does — the LLM reads this.",
-    "parameters": {
-        "type": "object",
-        "properties": {"x": {"type": "string"}},
-        "required": ["x"],
-    },
-    "run": _my_tool,
-})
+# or ngrok
+ngrok http 8000
 ```
 
-Restart the agent. The tool appears automatically on the **Tools** page and the planner picks it up.
+Copy the public HTTPS URL into **Settings → API base URL** in the panel. Done.
 
 ---
 
 ## 🏛️ Architecture
 
 ```
-        ┌────────────────────────────┐
-        │  Browser (React panel)     │
-        │  • Chat · Tools · Memory   │
-        │  • ElevenLabs TTS playback │
-        └─────────────┬──────────────┘
-                      │  HTTP  (JSON + NDJSON streaming)
-                      ▼
-        ┌────────────────────────────┐
-        │  http://localhost:8000     │
-        │  FastAPI  ·  Agent loop    │
-        ├────────────────────────────┤
-        │  ├─ Ollama  (local LLM)    │
-        │  ├─ Tools   (fs · sh · web)│
-        │  └─ Memory  (sessions·JSON)│
-        └────────────────────────────┘
+        ┌──────────────────────────────────┐
+        │  Browser — React Control Panel   │
+        │  • Cockpit · Chat · Tasks        │
+        │  • 3D orb · TTS · Aurora UI      │
+        └─────────────────┬────────────────┘
+                          │ HTTP + NDJSON streaming
+                          ▼
+        ┌──────────────────────────────────┐
+        │  http://localhost:8000           │
+        │  FastAPI · Dispatcher            │
+        ├──────────────────────────────────┤
+        │  ▸ Ollama (local LLM)            │
+        │  ▸ Sub-agents (6 specialists)    │
+        │  ▸ Tools (fs · sh · web · APIs)  │
+        │  ▸ Memory (sessions · JSON)      │
+        │  ▸ Scheduler · Audit log         │
+        └──────────────────────────────────┘
 ```
-
-**Why a tunnel?** Browsers can only reach `localhost` on the same physical machine. A tunnel gives the agent a public HTTPS URL so the panel can reach it from anywhere — without exposing your laptop directly.
 
 ---
 
-## 🛡️ Safety
+## 🛡️ Safety knobs
 
-- 📁 File and shell tools are **sandboxed** to the workspace; escaping paths are rejected.
+- 📁 File and shell tools are **sandboxed** to `~/.r2d2/workspace`.
 - 🔐 Restrict shell with `R2D2_SHELL_ALLOWLIST=ls,cat,git ./run.sh`.
-- 🏠 Bind to localhost only with `R2D2_HOST=127.0.0.1 ./run.sh` to disable LAN access.
-- 🔒 All model traffic stays on your machine. Nothing leaves it unless a tool explicitly does (e.g. `web_search`).
+- 🏠 LAN lockdown: `R2D2_HOST=127.0.0.1 ./run.sh`.
+- ✅ **Approval mode** in the panel holds risky publishes for human review.
 
 See `r2d2-agent/README.md` for the full env var reference.
 
 ---
 
+## 🐞 Troubleshooting
+
+<details>
+<summary><b>The status pill stays red — "Cannot reach R2D2 API"</b></summary>
+
+- Is the agent terminal still running? It should say `R2D2 Business Engine starting on http://localhost:8000`.
+- In the browser, open <http://localhost:8000/health> directly — does it return JSON?
+- If you ran a tunnel, paste the HTTPS URL into **Settings → API base URL**.
+
+</details>
+
+<details>
+<summary><b>"Agent up · Ollama down" warning</b></summary>
+
+Ollama isn't running. In a terminal:
+```bash
+ollama serve
+```
+Then click **Reconnect** in Settings.
+
+</details>
+
+<details>
+<summary><b>Voice doesn't speak</b></summary>
+
+- ElevenLabs key set in **Settings → Voice**? It must start with `sk_…`.
+- Check your browser console for `401` from `/api/tts` — usually a typo'd key.
+
+</details>
+
+<details>
+<summary><b>Sub-agent not appearing</b></summary>
+
+- Check the agent terminal log — did you see `[R2D2] Loaded sub-agent: <name>`?
+- Module must define a top-level `run(task: dict) -> dict` function.
+- Restart `./run.sh` after adding new files.
+
+</details>
+
+---
+
 ## 📜 License & credit
 
-MIT. Built and maintained by **Mohammed**. R2-D2 is trademarks of their respective owners — this project is a fan-inspired homage, not affiliated with Lucasfilm or Marvel.
+MIT. Built and maintained by **Mohammed**. R2-D2 is a trademark of its respective owner — this project is a fan-inspired homage and is not affiliated with Lucasfilm.
 
 <div align="center">
 

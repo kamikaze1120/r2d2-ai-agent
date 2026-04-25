@@ -17,7 +17,7 @@ const TTSInput = z.object({
  *   2. ELEVENLABS_API_KEY env var (platform secret)
  *
  * The user key never gets logged or persisted server-side — it's used once
- * per request and discarded. Lovable Cloud handles HTTPS in transit.
+ * per request and discarded. The host platform handles HTTPS in transit.
  */
 export const synthesizeSpeech = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => TTSInput.parse(input))
