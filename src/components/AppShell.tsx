@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useR2D2Health } from "@/hooks/useR2D2Health";
 import { cn } from "@/lib/utils";
-import { Activity, MessageSquare, Wrench, Brain, Settings, ListChecks, Package, BarChart3, ShieldCheck } from "lucide-react";
+import { Activity, MessageSquare, Wrench, Brain, Settings, ListChecks, Package, BarChart3, ShieldCheck, Megaphone, ScrollText } from "lucide-react";
 import { AutomationToggle } from "@/components/AutomationToggle";
 
 const NAV = [
@@ -10,6 +10,8 @@ const NAV = [
   { to: "/products", label: "Products", icon: Package },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/approvals", label: "Approvals", icon: ShieldCheck },
+  { to: "/marketing", label: "Marketing", icon: Megaphone },
+  { to: "/audit", label: "Audit", icon: ScrollText },
   { to: "/tools", label: "Tools", icon: Wrench },
   { to: "/memory", label: "Memory", icon: Brain },
   { to: "/settings", label: "Settings", icon: Settings },

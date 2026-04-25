@@ -16,14 +16,15 @@ export function AnalyticsView() {
     return () => clearInterval(t);
   }, []);
 
-  const max = data ? Math.max(1, ...data.daily.map((d) => d.revenue)) : 1;
+  const dailyMax = data ? Math.max(1, ...data.daily.map((d) => d.revenue)) : 1;
+  const nicheMax = data ? Math.max(1, ...data.by_niche.map((n) => n.revenue)) : 1;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Revenue analytics</h1>
         <p className="text-sm text-muted-foreground">
-          30-day rolling. Backed by SQLite events table — fed by platform sync jobs.
+          30-day rolling. Backed by SQLite events table — fed by daily platform sync.
         </p>
       </div>
 
@@ -41,6 +42,13 @@ export function AnalyticsView() {
           </div>
 
           <Card>
+            <CardHeader><CardTitle className="text-base">Funnel</CardTitle></CardHeader>
+            <CardContent>
+              <Funnel f={data.funnel} />
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader><CardTitle className="text-base">Daily revenue</CardTitle></CardHeader>
             <CardContent>
               {data.daily.length === 0 ? (
@@ -54,10 +62,38 @@ export function AnalyticsView() {
                       key={d.day}
                       title={`$${d.revenue.toFixed(2)} · ${d.views} views`}
                       className="flex-1 rounded-t bg-primary/70 hover:bg-primary"
-                      style={{ height: `${(d.revenue / max) * 100}%` }}
+                      style={{ height: `${(d.revenue / dailyMax) * 100}%` }}
                     />
                   ))}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">Revenue by niche</CardTitle></CardHeader>
+            <CardContent>
+              {data.by_niche.length === 0 ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  No per-niche revenue yet.
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {data.by_niche.map((n) => (
+                    <li key={n.niche_id} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="truncate font-medium">{n.name}</span>
+                        <span className="text-muted-foreground">
+                          ${n.revenue.toFixed(2)} · {n.sales} sales · {n.views} views
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded bg-muted">
+                        <div className="h-full bg-primary"
+                             style={{ width: `${(n.revenue / nicheMax) * 100}%` }} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
             </CardContent>
           </Card>
@@ -75,5 +111,41 @@ function Stat({ label, value }: { label: string; value: string }) {
         <div className="text-2xl font-semibold">{value}</div>
       </CardContent>
     </Card>
+  );
+}
+
+function Funnel({ f }: { f: AnalyticsOverview["funnel"] }) {
+  const steps = [
+    { label: "Views", value: f.views },
+    { label: "Favorites", value: f.favorites },
+    { label: "Sales", value: f.sales },
+  ];
+  const max = Math.max(1, ...steps.map((s) => s.value));
+  return (
+    <div className="space-y-2">
+      {steps.map((s, i) => {
+        const prev = i > 0 ? steps[i - 1].value : null;
+        const drop = prev && prev > 0
+          ? ` · ${((s.value / prev) * 100).toFixed(1)}% from prior`
+          : "";
+        return (
+          <div key={s.label} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium">{s.label}</span>
+              <span className="text-muted-foreground">
+                {s.value.toLocaleString()}{drop}
+              </span>
+            </div>
+            <div className="h-3 w-full overflow-hidden rounded bg-muted">
+              <div className="h-full bg-primary"
+                   style={{ width: `${(s.value / max) * 100}%` }} />
+            </div>
+          </div>
+        );
+      })}
+      <div className="pt-2 text-xs text-muted-foreground">
+        Revenue: <span className="font-medium text-foreground">${f.revenue.toFixed(2)}</span>
+      </div>
+    </div>
   );
 }

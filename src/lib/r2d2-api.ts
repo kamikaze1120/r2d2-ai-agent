@@ -140,6 +140,9 @@ export type AnalyticsOverview = {
     revenue: number; conversion: number;
   };
   daily: { day: number; revenue: number; views: number }[];
+  funnel: { views: number; favorites: number; sales: number; revenue: number };
+  by_niche: { niche_id: string; name: string; revenue: number;
+              sales: number; views: number }[];
 };
 
 export type SchedulerJob = {
@@ -153,6 +156,20 @@ export type AutomationStatus = {
   scheduler: SchedulerStatus;
   approval_threshold: number;
   action_allowlist: string[];
+  dry_run: boolean;
+};
+
+export type AuditEntry = {
+  id: number; ts: number; actor: string; action: string;
+  target: string | null; outcome: "ok" | "blocked" | "dry_run" | "error";
+  detail: Record<string, unknown>;
+};
+
+export type MarketingItem = {
+  id: string; product_id: string; ts: number;
+  status: "queued" | "posted"; posted_at?: number;
+  title?: string; description?: string; hashtags?: string[];
+  hook?: string; beats?: string[]; cta?: string;
 };
 
 export const api = {
@@ -198,6 +215,13 @@ export const api = {
   analyticsOverview: (windowDays = 30) =>
     req<AnalyticsOverview>(`/analytics/overview?window_days=${windowDays}`),
 
+  patchListing: (id: string, patch: Partial<{ title: string;
+        description: string; tags: string[]; price_usd: number;
+        confidence: number }>) =>
+    req<{ ok: boolean; listing: Product["listing"] }>(
+      `/products/${id}/listing`,
+      { method: "PATCH", body: JSON.stringify(patch) }),
+
   automationStatus: () => req<AutomationStatus>("/automation"),
   automationStart: () =>
     req<AutomationStatus>("/automation/start", { method: "POST" }),
@@ -206,6 +230,31 @@ export const api = {
   automationTrigger: (jobName: string) =>
     req<{ ok: boolean; triggered: string }>(
       `/automation/trigger/${encodeURIComponent(jobName)}`, { method: "POST" }),
+  patchJob: (name: string, body: { interval_seconds?: number;
+                                    enabled?: boolean }) =>
+    req<AutomationStatus>(`/automation/jobs/${encodeURIComponent(name)}`,
+      { method: "PATCH", body: JSON.stringify(body) }),
+  patchSafety: (body: { dry_run?: boolean; approval_threshold?: number;
+                         action_allowlist?: string[] }) =>
+    req<AutomationStatus>("/automation/safety",
+      { method: "PATCH", body: JSON.stringify(body) }),
+
+  audit: (params: { limit?: number; action?: string; outcome?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.limit) q.set("limit", String(params.limit));
+    if (params.action) q.set("action", params.action);
+    if (params.outcome) q.set("outcome", params.outcome);
+    const s = q.toString();
+    return req<{ entries: AuditEntry[] }>(`/audit${s ? `?${s}` : ""}`);
+  },
+
+  marketingQueue: (kind: "pinterest" | "tiktok") =>
+    req<{ items: MarketingItem[]; pinterest_configured: boolean }>(
+      `/marketing/queue/${kind}`),
+  marketingMarkPosted: (kind: "pinterest" | "tiktok", id: string) =>
+    req<{ ok: boolean }>(
+      `/marketing/queue/${kind}/${encodeURIComponent(id)}/posted`,
+      { method: "POST" }),
 };
 
 export type ChatEvent =
