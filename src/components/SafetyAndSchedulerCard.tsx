@@ -27,8 +27,8 @@ export function SafetyAndSchedulerCard() {
     } catch (e) { toast.error((e as Error).message); }
   };
 
-  useEffect(() => { refresh(); const t = setInterval(refresh, 8000);
-    return () => clearInterval(t); }, []);
+  useEffect(() => { refresh(); const t = window.setInterval(refresh, 8000);
+    return () => window.clearInterval(t); }, []);
 
   if (!status) return null;
 
@@ -56,7 +56,7 @@ export function SafetyAndSchedulerCard() {
     catch (e) { toast.error((e as Error).message); }
   };
 
-  const setInterval = async (name: string, hours: number) => {
+  const updateInterval = async (name: string, hours: number) => {
     try { setStatus(await api.patchJob(name, { interval_seconds: Math.round(hours * 3600) }));
       toast.success("Schedule updated"); }
     catch (e) { toast.error((e as Error).message); }
@@ -148,7 +148,7 @@ export function SafetyAndSchedulerCard() {
                        defaultValue={(j.interval_seconds / 3600).toFixed(2)}
                        onBlur={(e) => {
                          const h = parseFloat(e.target.value);
-                         if (h > 0) setInterval(j.name, h);
+                         if (h > 0) updateInterval(j.name, h);
                        }} />
                 <span className="text-xs text-muted-foreground">hours</span>
                 <Button size="sm" variant="outline"
