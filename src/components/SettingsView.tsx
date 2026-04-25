@@ -127,7 +127,47 @@ export function SettingsView() {
         <div>
           <h3 className="text-sm font-semibold">Voice</h3>
           <p className="text-xs text-muted-foreground">
-            R2D2 speaks aloud using ElevenLabs. The key stays on the server.
+            R2D2 speaks JARVIS-style using ElevenLabs. Your key stays in your
+            browser and is sent server-side per request only.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="elevenkey" className="flex items-center gap-1.5">
+            <KeyRound className="size-3.5" /> ElevenLabs API key
+          </Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="elevenkey"
+              type={showKey ? "text" : "password"}
+              value={elevenKey}
+              onChange={(e) => setElevenKeyState(e.target.value)}
+              placeholder="sk_..."
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setShowKey((s) => !s)}
+              title={showKey ? "Hide" : "Show"}
+            >
+              {showKey ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            No key?{" "}
+            <a
+              href="https://elevenlabs.io/app/settings/api-keys"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-0.5 text-primary hover:underline"
+            >
+              Create one in ElevenLabs <ExternalLink className="size-3" />
+            </a>
+            . Stored locally in this browser only — never persisted on our
+            servers.
           </p>
         </div>
 
