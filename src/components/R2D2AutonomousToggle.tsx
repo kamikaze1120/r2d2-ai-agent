@@ -17,9 +17,10 @@ export function R2D2AutonomousToggle() {
       variant={enabled ? "default" : "outline"}
       onClick={toggle}
       className={cn(
-        "h-8 gap-1.5",
-        enabled &&
-          "bg-accent text-accent-foreground hover:bg-accent/90 shadow-[0_0_20px_-4px_var(--color-accent)]",
+        "h-8 gap-1.5 rounded-full border-border/60 transition-all",
+        enabled
+          ? "border-transparent bg-gradient-to-r from-accent to-primary text-accent-foreground shadow-[0_0_24px_-4px_var(--color-accent)] hover:opacity-95"
+          : "bg-secondary/40 backdrop-blur hover:bg-secondary/70",
       )}
       title={
         enabled
