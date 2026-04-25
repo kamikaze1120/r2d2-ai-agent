@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
-import { JarvisHome } from "@/components/JarvisHome";
+import { R2D2Home } from "@/components/R2D2Home";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "JARVIS-style command center for the R2D2 autonomous digital product engine. Speak orders, get spoken replies, and let R2D2 run the business.",
+          "R2D2-style command center for the R2D2 autonomous digital product engine. Speak orders, get spoken replies, and let R2D2 run the business.",
       },
       {
         property: "og:title",
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Cinematic JARVIS interface for the R2D2 autonomous engine — voice, proactive questions, and a self-driving worker pool.",
+          "Cinematic command interface for the R2D2 autonomous engine — voice, proactive questions, and a self-driving worker pool.",
       },
     ],
   }),
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/")({
 function Page() {
   return (
     <AppShell>
-      <JarvisHome />
+      <R2D2Home />
     </AppShell>
   );
 }

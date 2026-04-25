@@ -3,9 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { JarvisGlobe } from "@/components/JarvisGlobe";
+import { R2D2Globe } from "@/components/R2D2Globe";
 import { useTTS, getElevenKey } from "@/hooks/useTTS";
-import { useAutonomousJarvis } from "@/hooks/useAutonomousJarvis";
+import { useAutonomousR2D2 } from "@/hooks/useAutonomousR2D2";
 import { api, getModel, streamChat, type ChatEvent } from "@/lib/r2d2-api";
 import { Link } from "@tanstack/react-router";
 import {
@@ -22,9 +22,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function JarvisHome() {
+export function R2D2Home() {
   const tts = useTTS();
-  const jarvis = useAutonomousJarvis();
+  const autonomous = useAutonomousR2D2();
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [lastReply, setLastReply] = useState<string>("");
@@ -94,19 +94,19 @@ export function JarvisHome() {
 
         <div className="grid items-center gap-8 md:grid-cols-[auto_1fr]">
           <div className="mx-auto">
-            <JarvisGlobe size={300} speaking={tts.speaking} />
+            <R2D2Globe size={300} speaking={tts.speaking} />
           </div>
 
           <div className="flex flex-col gap-4">
             <div>
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/80">
                 <Sparkles className="size-3.5" />
-                {jarvis.enabled ? "Autonomous mode" : "Standby"}
+                {autonomous.enabled ? "Autonomous mode" : "Standby"}
               </div>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
                 {tts.speaking
                   ? "Speaking…"
-                  : jarvis.enabled
+                  : autonomous.enabled
                     ? "At your service, sir."
                     : "R2D2 standing by."}
               </h1>
@@ -185,9 +185,9 @@ export function JarvisHome() {
       </div>
 
       {/* ---------- Notice strip ---------- */}
-      {jarvis.notices.length > 0 && (
+      {autonomous.notices.length > 0 && (
         <div className="space-y-2">
-          {jarvis.notices.map((n) => (
+          {autonomous.notices.map((n) => (
             <div
               key={n.id}
               className={cn(
@@ -200,12 +200,12 @@ export function JarvisHome() {
               <Sparkles className="mt-0.5 size-4 shrink-0 text-accent" />
               <div className="flex-1">
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {n.kind === "prompt" ? "JARVIS asks" : "Milestone"}
+                  {n.kind === "prompt" ? "R2D2 asks" : "Milestone"}
                 </div>
                 <div>{n.text}</div>
               </div>
               <button
-                onClick={() => jarvis.dismissNotice(n.id)}
+                onClick={() => autonomous.dismissNotice(n.id)}
                 className="text-muted-foreground hover:text-foreground"
                 aria-label="Dismiss"
               >
@@ -244,7 +244,7 @@ export function JarvisHome() {
         <Mic className="size-4" />
         Tip: turn on{" "}
         <Badge variant="outline" className="font-normal">
-          JARVIS
+          R2D2
         </Badge>{" "}
         in the header to let R2D2 narrate the engine, ask you questions, and
         kick off scheduled jobs without prompting.

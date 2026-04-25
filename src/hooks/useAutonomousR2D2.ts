@@ -2,15 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { api, type AuditEntry } from "@/lib/r2d2-api";
 import { useTTS } from "./useTTS";
 
-const LS_KEY = "r2d2.jarvisAutonomous";
-const LAST_AUDIT_KEY = "r2d2.jarvisLastAuditId";
-const LAST_PROMPT_KEY = "r2d2.jarvisLastPromptAt";
+const LS_KEY = "r2d2.r2d2Autonomous";
+const LAST_AUDIT_KEY = "r2d2.r2d2LastAuditId";
+const LAST_PROMPT_KEY = "r2d2.r2d2LastPromptAt";
 
-export function getJarvisAutonomous(): boolean {
+export function getR2D2Autonomous(): boolean {
   if (typeof window === "undefined") return false;
   return localStorage.getItem(LS_KEY) === "1";
 }
-export function setJarvisAutonomous(on: boolean) {
+export function setR2D2Autonomous(on: boolean) {
   localStorage.setItem(LS_KEY, on ? "1" : "0");
 }
 
@@ -43,7 +43,7 @@ const NARRATABLE_ACTIONS: Record<string, (e: AuditEntry) => string | null> = {
 
 type Notice = { id: string; ts: number; text: string; kind: "milestone" | "prompt" };
 
-export type JarvisState = {
+export type R2D2State = {
   enabled: boolean;
   notices: Notice[];
   toggle: () => void;
@@ -55,15 +55,15 @@ const POLL_MS = 8000;
 const SCHEDULED_JOBS = ["daily_business_run", "strategy_review"];
 
 /**
- * Autonomous JARVIS mode.
+ * Autonomous mode mode.
  *
  * When enabled:
  *  - polls /audit; speaks + lists significant new actions
  *  - every ~4 minutes, asks a proactive question and speaks it
  *  - kicks off scheduled engine jobs once per browser session
  */
-export function useAutonomousJarvis(): JarvisState {
-  const [enabled, setEnabled] = useState<boolean>(() => getJarvisAutonomous());
+export function useAutonomousR2D2(): R2D2State {
+  const [enabled, setEnabled] = useState<boolean>(() => getR2D2Autonomous());
   const [notices, setNotices] = useState<Notice[]>([]);
   const tts = useTTS();
   const lastAuditId = useRef<number>(
@@ -93,7 +93,7 @@ export function useAutonomousJarvis(): JarvisState {
   const toggle = () => {
     const next = !enabled;
     setEnabled(next);
-    setJarvisAutonomous(next);
+    setR2D2Autonomous(next);
     if (next) {
       tts.speak("Autonomous mode online, sir. Standing by.");
     } else {

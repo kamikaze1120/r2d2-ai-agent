@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { subscribeAmplitude } from "@/hooks/useTTS";
 
 /**
- * JARVIS-style volumetric orb.
+ * R2D2-style volumetric orb.
  *
  * Three.js scene with:
  *   - A glowing wireframe icosphere that breathes idle and distorts on TTS
@@ -14,7 +14,7 @@ import { subscribeAmplitude } from "@/hooks/useTTS";
  * The orb subscribes to the global TTS amplitude (0..1) so it pulses
  * regardless of which component triggered the speech.
  */
-export function JarvisGlobe({
+export function R2D2Globe({
   size = 320,
   speaking = false,
 }: {
