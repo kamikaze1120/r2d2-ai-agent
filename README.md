@@ -412,6 +412,101 @@ See `r2d2-agent/README.md` for the full env var reference.
 
 ---
 
+## 💽 Install on a Windows external drive (save laptop space)
+
+Models are big — **llama3.2 ≈ 2 GB**, **llama3.1 70B ≈ 40 GB**. Move both R2D2
+and Ollama onto an external SSD/HDD so your C:\ stays clean. Steps assume the
+drive is mounted as `D:\`. Substitute your own letter.
+
+### 🪜 Step 1 — Install Ollama on the external drive
+
+1. Download the Ollama Windows installer from <https://ollama.com/download/windows>.
+2. **Don't double-click yet.** Open **PowerShell** and run the installer with a
+   custom destination so binaries land on `D:\`:
+
+   ```powershell
+   Start-Process -FilePath "$HOME\Downloads\OllamaSetup.exe" `
+     -ArgumentList "/DIR=D:\Ollama" -Wait
+   ```
+
+3. Tell Ollama to also store **models** on the external drive (this is the
+   biggest space saver — every model goes here):
+
+   ```powershell
+   [System.Environment]::SetEnvironmentVariable(
+     "OLLAMA_MODELS", "D:\Ollama\models", "User")
+   ```
+
+4. Close all PowerShell windows and open a **new** one so the env var loads.
+   Verify:
+
+   ```powershell
+   echo $env:OLLAMA_MODELS    # → D:\Ollama\models
+   ```
+
+5. Pull a model and confirm it lands on `D:\`:
+
+   ```powershell
+   ollama pull llama3.2
+   dir D:\Ollama\models       # should now contain blobs/ and manifests/
+   ```
+
+### 🪜 Step 2 — Clone R2D2 onto the external drive
+
+```powershell
+cd D:\
+git clone https://github.com/<you>/r2d2.git
+cd D:\r2d2
+```
+
+### 🪜 Step 3 — Put the Python virtualenv on the external drive too
+
+The `.venv` folder can grow to **~500 MB** with all dependencies. Keep it on `D:\`:
+
+```powershell
+cd D:\r2d2\r2d2-agent
+python -m venv D:\r2d2\.venv
+D:\r2d2\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Edit `r2d2-agent\run.sh` (or just call uvicorn directly) so it activates the
+external venv:
+
+```powershell
+D:\r2d2\.venv\Scripts\python.exe -m uvicorn r2d2.server:app --host 127.0.0.1 --port 8000
+```
+
+### 🪜 Step 4 — Persist the model & cache locations
+
+Add these once (PowerShell as your normal user, not Admin):
+
+```powershell
+[System.Environment]::SetEnvironmentVariable("OLLAMA_MODELS", "D:\Ollama\models", "User")
+[System.Environment]::SetEnvironmentVariable("R2D2_WORKSPACE", "D:\r2d2\workspace", "User")
+[System.Environment]::SetEnvironmentVariable("HF_HOME",        "D:\r2d2\hf-cache",  "User")
+```
+
+`HF_HOME` keeps any Hugging Face downloads (used by some sub-agents) on `D:\`
+too.
+
+### 🪜 Step 5 — Verify nothing is silently writing to C:\
+
+```powershell
+Get-ChildItem $env:USERPROFILE\.ollama -ErrorAction SilentlyContinue
+# Should be empty or only contain a tiny config file.
+```
+
+If `~/.ollama/models` shows up with multi-GB blobs, your env var didn't load —
+re-open PowerShell and rerun Step 1 #4.
+
+### 🧯 If the drive is unplugged
+
+Ollama and R2D2 will fail fast with `cannot find D:\…`. Plug the drive back in
+and click **Reconnect** in the panel — no data is lost.
+
+---
+
 ## 🐞 Troubleshooting
 
 <details>
