@@ -550,7 +550,7 @@ Then click **Reconnect** in Settings.
 
 ## 📜 License & credit
 
-MIT. Built and maintained by **Mohammed**. R2-D2 is a trademark of its respective owner — this project is a fan-inspired homage and is not affiliated with Lucasfilm.
+MIT. Built and maintained by **Mujtaba**. R2-D2 is a trademark of its respective owner — this project is a fan-inspired homage and is not affiliated with Lucasfilm.
 
 <div align="center">
 
