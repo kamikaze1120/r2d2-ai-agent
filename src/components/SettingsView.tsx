@@ -16,8 +16,30 @@ import {
   setVoiceId,
   useTTS,
 } from "@/hooks/useTTS";
-import { CheckCircle2, XCircle, Save, RefreshCw, Volume2, Loader2, ExternalLink, KeyRound, Eye, EyeOff } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Save,
+  RefreshCw,
+  Volume2,
+  Loader2,
+  ExternalLink,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Cpu,
+  Zap,
+} from "lucide-react";
 import { SafetyAndSchedulerCard } from "@/components/SafetyAndSchedulerCard";
+import {
+  fetchOllamaModels,
+  getLiteMode,
+  getOllamaBase,
+  maskSecret,
+  setLiteMode,
+  setOllamaBase,
+} from "@/lib/r2d2-settings";
+import { toast } from "sonner";
 
 export function SettingsView() {
   const [base, setBase] = useState(getApiBase());
@@ -27,6 +49,9 @@ export function SettingsView() {
   const [elevenKey, setElevenKeyState] = useState(getElevenKey());
   const [showKey, setShowKey] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [ollamaBase, setOllamaBaseState] = useState(getOllamaBase());
+  const [localModels, setLocalModels] = useState<string[]>([]);
+  const [lite, setLite] = useState(getLiteMode());
   const { health, connected, loading, error } = useR2D2Health(7000);
   const { speak, speaking, error: ttsError } = useTTS();
 
@@ -34,23 +59,35 @@ export function SettingsView() {
     if (!model && health?.default_model) setModelState(health.default_model);
   }, [health, model]);
 
+  useEffect(() => {
+    fetchOllamaModels(ollamaBase).then(setLocalModels);
+  }, [ollamaBase]);
+
   const save = () => {
     setApiBase(base);
     setModel(model);
     setVoiceId(voice);
     setAutoSpeak(auto);
     setElevenKey(elevenKey);
+    setOllamaBase(ollamaBase);
+    setLiteMode(lite);
     setSavedAt(Date.now());
-    // Refresh page-level state by reloading; cheap and reliable
-    setTimeout(() => window.location.reload(), 400);
+    toast.success("Settings saved", {
+      description: "Reconnecting to apply changes…",
+    });
+    setTimeout(() => window.location.reload(), 600);
   };
 
-  const refreshModels = async () => {
-    try {
-      await api.health();
-    } catch {
-      /* noop */
-    }
+  const saveKeysOnly = () => {
+    setElevenKey(elevenKey);
+    setVoiceId(voice);
+    setOllamaBase(ollamaBase);
+    setModel(model);
+    toast.success("Keys & integrations saved", {
+      description: elevenKey
+        ? `ElevenLabs key ending in ${elevenKey.slice(-4)} stored locally.`
+        : "Stored locally in this browser.",
+    });
   };
 
   return (
@@ -62,79 +99,25 @@ export function SettingsView() {
         </p>
       </div>
 
+      {/* ============== API Keys & Integrations ============== */}
       <Card className="space-y-4 p-4">
-        <div className="space-y-2">
-          <Label htmlFor="api">R2D2 API base URL</Label>
-          <Input
-            id="api"
-            value={base}
-            onChange={(e) => setBase(e.target.value)}
-            placeholder="http://localhost:8000 or https://abc.trycloudflare.com"
-          />
-          <p className="text-xs text-muted-foreground">
-            Use <code>http://localhost:8000</code> when this panel runs on the
-            same machine. For remote use, run a tunnel (Cloudflare or ngrok)
-            and paste the public URL here.
-          </p>
+        <div className="flex items-center gap-2">
+          <KeyRound className="size-4 text-primary" />
+          <h2 className="text-base font-semibold">API Keys & Integrations</h2>
         </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="model">Default model</Label>
-            <Button variant="ghost" size="sm" onClick={refreshModels}>
-              <RefreshCw className="size-3" /> Refresh
-            </Button>
-          </div>
-          {health?.ollama.models && health.ollama.models.length > 0 ? (
-            <select
-              id="model"
-              value={model}
-              onChange={(e) => setModelState(e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-input px-3 py-1 text-sm"
-            >
-              <option value="">Use server default ({health.default_model})</option>
-              {health.ollama.models.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <Input
-              id="model"
-              value={model}
-              onChange={(e) => setModelState(e.target.value)}
-              placeholder="llama3.2"
-            />
-          )}
-          <p className="text-xs text-muted-foreground">
-            Models are pulled on your laptop with{" "}
-            <code>ollama pull llama3.2</code>.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button onClick={save}>
-            <Save className="size-4" /> Save & reconnect
-          </Button>
-          {savedAt && (
-            <span className="text-xs text-muted-foreground">Reloading…</span>
-          )}
-        </div>
-      </Card>
-
-      <Card className="space-y-4 p-4">
-        <div>
-          <h3 className="text-sm font-semibold">Voice</h3>
-          <p className="text-xs text-muted-foreground">
-            R2D2 speaks R2D2-style using ElevenLabs. Your key stays in your
-            browser and is sent server-side per request only.
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Edit credentials directly here — no shell scripts needed. Everything is
+          stored in your browser only.
+        </p>
 
         <div className="space-y-2">
           <Label htmlFor="elevenkey" className="flex items-center gap-1.5">
-            <KeyRound className="size-3.5" /> ElevenLabs API key
+            ElevenLabs API key
+            {elevenKey && (
+              <span className="ml-2 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success">
+                saved · {maskSecret(elevenKey)}
+              </span>
+            )}
           </Label>
           <div className="flex items-center gap-2">
             <Input
@@ -166,13 +149,11 @@ export function SettingsView() {
             >
               Create one in ElevenLabs <ExternalLink className="size-3" />
             </a>
-            . Stored locally in this browser only — never persisted on our
-            servers.
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="voice">Voice</Label>
+          <Label htmlFor="voice">Voice ID</Label>
           <select
             id="voice"
             value={voice}
@@ -185,7 +166,116 @@ export function SettingsView() {
               </option>
             ))}
           </select>
+          <Input
+            value={voice}
+            onChange={(e) => setVoice(e.target.value)}
+            placeholder="Or paste a custom ElevenLabs voice ID"
+            className="text-xs font-mono"
+          />
         </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="ollama-base">Ollama base URL</Label>
+            <Input
+              id="ollama-base"
+              value={ollamaBase}
+              onChange={(e) => setOllamaBaseState(e.target.value)}
+              placeholder="http://127.0.0.1:11434"
+            />
+            <p className="text-xs text-muted-foreground">
+              {localModels.length
+                ? `${localModels.length} model(s) detected`
+                : "No models detected — start Ollama or pull one"}
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="model-name">Model name</Label>
+            {localModels.length > 0 ? (
+              <select
+                id="model-name"
+                value={model}
+                onChange={(e) => setModelState(e.target.value)}
+                className="flex h-9 w-full rounded-md border border-input bg-input px-3 py-1 text-sm"
+              >
+                <option value="">Server default ({health?.default_model || "auto"})</option>
+                {localModels.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <Input
+                id="model-name"
+                value={model}
+                onChange={(e) => setModelState(e.target.value)}
+                placeholder="llama3.2"
+              />
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Button onClick={saveKeysOnly} variant="default" className="gap-1.5">
+            <Save className="size-4" /> Save keys & integrations
+          </Button>
+        </div>
+      </Card>
+
+      {/* ============== Performance ============== */}
+      <Card className="space-y-4 p-4">
+        <div className="flex items-center gap-2">
+          <Zap className="size-4 text-accent" />
+          <h2 className="text-base font-semibold">Performance</h2>
+        </div>
+        <div className="flex items-center justify-between rounded-md border border-border p-3">
+          <div>
+            <Label htmlFor="lite" className="cursor-pointer flex items-center gap-2">
+              <Cpu className="size-4" /> Lightweight Mode
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Trims context to ~512 tokens, mutes voice narration, and stops
+              proactive prompts. Best on low-RAM laptops.
+            </p>
+          </div>
+          <Switch id="lite" checked={lite} onCheckedChange={setLite} />
+        </div>
+      </Card>
+
+      {/* ============== R2D2 agent connection ============== */}
+      <Card className="space-y-4 p-4">
+        <h2 className="text-base font-semibold">R2D2 agent connection</h2>
+        <div className="space-y-2">
+          <Label htmlFor="api">R2D2 API base URL</Label>
+          <Input
+            id="api"
+            value={base}
+            onChange={(e) => setBase(e.target.value)}
+            placeholder="http://localhost:8000"
+          />
+          <p className="text-xs text-muted-foreground">
+            Use <code>http://localhost:8000</code> when this panel runs on the
+            same machine. For remote use, run a tunnel and paste the public URL.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button onClick={save}>
+            <Save className="size-4" /> Save & reconnect
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => api.health().catch(() => {})}>
+            <RefreshCw className="size-3" /> Refresh
+          </Button>
+          {savedAt && (
+            <span className="text-xs text-muted-foreground">Reloading…</span>
+          )}
+        </div>
+      </Card>
+
+      {/* ============== Voice playback ============== */}
+      <Card className="space-y-4 p-4">
+        <h3 className="text-sm font-semibold">Voice playback</h3>
 
         <div className="flex items-center justify-between rounded-md border border-border p-3">
           <div>
@@ -193,7 +283,7 @@ export function SettingsView() {
               Auto-speak every reply
             </Label>
             <p className="text-xs text-muted-foreground">
-              Plays R2D2's final answer as soon as it arrives.
+              Plays R2D2's final answer as soon as it arrives (disabled in Lite Mode).
             </p>
           </div>
           <Switch id="auto" checked={auto} onCheckedChange={setAuto} />
@@ -204,7 +294,7 @@ export function SettingsView() {
             variant="secondary"
             onClick={() =>
               speak(
-                "At your service, Sir. Voice systems online and standing by.",
+                "At your service, sir. Voice systems online and standing by.",
                 voice,
               )
             }
@@ -232,7 +322,7 @@ export function SettingsView() {
             <Status
               ok={!!health?.ollama.ok}
               label="Ollama daemon"
-              detail={health?.ollama.host || "unknown"}
+              detail={health?.ollama.host || ollamaBase}
             />
             <Status
               ok={!!health?.ollama.models?.length}
@@ -255,7 +345,7 @@ export function SettingsView() {
           <li>Install Ollama: <code>curl -fsSL https://ollama.com/install.sh | sh</code></li>
           <li>Pull a model: <code>ollama pull llama3.2</code></li>
           <li>Start the agent: <code>cd r2d2-agent && ./run.sh</code></li>
-          <li>(Optional, for remote access) <code>cloudflared tunnel --url http://localhost:8000</code></li>
+          <li>(Optional) <code>cloudflared tunnel --url http://localhost:8000</code></li>
         </ol>
       </Card>
     </div>
