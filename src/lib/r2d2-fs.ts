@@ -46,8 +46,8 @@ export async function listFiles(
   handle: FileSystemDirectoryHandle,
 ): Promise<{ name: string; kind: "file" | "directory" }[]> {
   const out: { name: string; kind: "file" | "directory" }[] = [];
-  // @ts-expect-error - .values() exists on FileSystemDirectoryHandle
-  for await (const entry of handle.values()) {
+  const anyHandle = handle as unknown as { values: () => AsyncIterable<{ name: string; kind: "file" | "directory" }> };
+  for await (const entry of anyHandle.values()) {
     out.push({ name: entry.name, kind: entry.kind });
   }
   return out.sort((a, b) =>
@@ -70,8 +70,8 @@ export async function writeTextFile(
   content: string,
 ): Promise<void> {
   const fh = await dir.getFileHandle(name, { create: true });
-  // @ts-expect-error - createWritable exists on FileSystemFileHandle
-  const w = await fh.createWritable();
+  const anyFh = fh as unknown as { createWritable: () => Promise<{ write: (c: string) => Promise<void>; close: () => Promise<void> }> };
+  const w = await anyFh.createWritable();
   await w.write(content);
   await w.close();
 }
