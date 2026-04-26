@@ -20,6 +20,10 @@ import {
 } from "lucide-react";
 import { AutomationToggle } from "@/components/AutomationToggle";
 import { R2D2AutonomousToggle } from "@/components/R2D2AutonomousToggle";
+import { FloatingVoiceBubble } from "@/components/FloatingVoiceBubble";
+import { R2D2StatusAvatar, type R2D2Status } from "@/components/R2D2StatusAvatar";
+import { useTTS } from "@/hooks/useTTS";
+import { useAutonomousR2D2 } from "@/hooks/useAutonomousR2D2";
 import r2d2Logo from "@/assets/r2d2-logo.png";
 
 const NAV = [
@@ -48,10 +52,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { health, connected, loading, error } = useR2D2Health(5000);
   const [open, setOpen] = useState<boolean>(readSidebarOpen);
+  const tts = useTTS();
+  const autonomous = useAutonomousR2D2();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_KEY, open ? "1" : "0");
   }, [open]);
+
+  // Derive a coarse R2D2 status for the avatar
+  const status: R2D2Status = !mounted
+    ? "idle"
+    : tts.speaking
+      ? "executing"
+      : autonomous.enabled
+        ? "listening"
+        : "idle";
 
   return (
     <div className="relative flex min-h-screen text-foreground">
@@ -178,6 +198,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="hidden flex-1 lg:block" />
 
             <div className="flex items-center gap-2">
+              {mounted && <R2D2StatusAvatar status={status} size={32} />}
               <R2D2AutonomousToggle />
               <AutomationToggle />
               <div className="lg:hidden">
@@ -219,6 +240,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           data leaves your computer.
         </footer>
       </div>
+
+      {/* Floating mic + voice transcript bubble (mounted globally) */}
+      {mounted && <FloatingVoiceBubble />}
     </div>
   );
 }
