@@ -255,6 +255,26 @@ export const api = {
     req<{ ok: boolean }>(
       `/marketing/queue/${kind}/${encodeURIComponent(id)}/posted`,
       { method: "POST" }),
+
+  // ----- Host filesystem & launcher -----
+  hostRoots: () =>
+    req<{ restrict: boolean; allowed_roots: string[] }>("/host/fs/roots"),
+  hostFsList: (path: string) =>
+    req<{ path: string; entries: { name: string; kind: "file" | "directory"; size: number; modified: number }[] }>(
+      "/host/fs/list",
+      { method: "POST", body: JSON.stringify({ path }) }),
+  hostFsRead: (path: string, max_bytes = 200_000) =>
+    req<{ path: string; text?: string; binary?: boolean; bytes?: number }>(
+      "/host/fs/read",
+      { method: "POST", body: JSON.stringify({ path, max_bytes }) }),
+  hostFsWrite: (path: string, content: string) =>
+    req<{ ok: boolean; path: string }>(
+      "/host/fs/write",
+      { method: "POST", body: JSON.stringify({ path, content }) }),
+  hostLaunch: (target: string) =>
+    req<{ ok: boolean; target: string }>(
+      "/host/launch",
+      { method: "POST", body: JSON.stringify({ target }) }),
 };
 
 export type ChatEvent =

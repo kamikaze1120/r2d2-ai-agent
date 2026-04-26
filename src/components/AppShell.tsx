@@ -22,6 +22,9 @@ import { AutomationToggle } from "@/components/AutomationToggle";
 import { R2D2AutonomousToggle } from "@/components/R2D2AutonomousToggle";
 import { FloatingVoiceBubble } from "@/components/FloatingVoiceBubble";
 import { R2D2StatusAvatar, type R2D2Status } from "@/components/R2D2StatusAvatar";
+import { ModelSwitcher } from "@/components/ModelSwitcher";
+import { LiteModeChip } from "@/components/LiteModeChip";
+import { SystemStatusWidget } from "@/components/SystemStatusWidget";
 import { useTTS } from "@/hooks/useTTS";
 import { useAutonomousR2D2 } from "@/hooks/useAutonomousR2D2";
 import r2d2Logo from "@/assets/r2d2-logo.png";
@@ -155,6 +158,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Status & collapse */}
         <div className="border-t border-border/60 px-3 py-3 space-y-2">
+          {open && mounted && <SystemStatusWidget />}
           {open && <StatusPill connected={connected} loading={loading} error={error} health={health} />}
           <button
             onClick={() => setOpen((v) => !v)}
@@ -199,6 +203,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="flex items-center gap-2">
               {mounted && <R2D2StatusAvatar status={status} size={32} />}
+              <LiteModeChip />
+              <div className="hidden md:block">
+                <ModelSwitcher />
+              </div>
               <R2D2AutonomousToggle />
               <AutomationToggle />
               <div className="lg:hidden">
