@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2, Play, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { LocalTaskQueue } from "@/components/LocalTaskQueue";
 
 const STATUS_COLOR: Record<string, string> = {
   pending: "bg-muted text-foreground",
@@ -60,10 +61,13 @@ export function TasksView() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-8">
+      {/* In-browser autonomous queue */}
+      <LocalTaskQueue />
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-6">
         <div>
-          <h1 className="text-2xl font-semibold">Task queue</h1>
+          <h1 className="text-2xl font-semibold">Agent task queue</h1>
           <p className="text-sm text-muted-foreground">
             Persistent, restart-safe. Worker claims tasks atomically.
           </p>
