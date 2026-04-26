@@ -13,6 +13,7 @@ from .memory import business_memory
 from .analytics import performance_tracker
 from .agents import dispatcher, marketing_agent
 from .tools_pkg import etsy_tool, shopify_tool, pinterest_tool
+from .api.host_routes import router as host_router
 
 
 app = FastAPI(title="R2D2 Business Engine", version="0.3.0")
@@ -24,6 +25,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Host-level filesystem + app launcher
+app.include_router(host_router)
 
 
 # ----- Schemas -----
