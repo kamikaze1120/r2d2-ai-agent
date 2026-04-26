@@ -35,11 +35,39 @@ import {
   fetchOllamaModels,
   getLiteMode,
   getOllamaBase,
+  getWakeWordEnabled,
   maskSecret,
   setLiteMode,
   setOllamaBase,
+  setWakeWordEnabled,
 } from "@/lib/r2d2-settings";
 import { toast } from "sonner";
+
+function WakeWordToggle() {
+  const [on, setOn] = useState(false);
+  useEffect(() => setOn(getWakeWordEnabled()), []);
+  return (
+    <div className="flex items-center justify-between rounded-md border border-border p-3">
+      <div>
+        <Label htmlFor="wake" className="cursor-pointer">
+          Wake word — “Hey R2D2”
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          When ON, R2D2 only responds to voice commands prefixed with the wake
+          phrase. Use the floating mic in the bottom-right to start listening.
+        </p>
+      </div>
+      <Switch
+        id="wake"
+        checked={on}
+        onCheckedChange={(v) => {
+          setOn(v);
+          setWakeWordEnabled(v);
+        }}
+      />
+    </div>
+  );
+}
 
 export function SettingsView() {
   const [base, setBase] = useState(getApiBase());
@@ -223,11 +251,11 @@ export function SettingsView() {
         </div>
       </Card>
 
-      {/* ============== Performance ============== */}
+      {/* ============== Performance & Voice commands ============== */}
       <Card className="space-y-4 p-4">
         <div className="flex items-center gap-2">
           <Zap className="size-4 text-accent" />
-          <h2 className="text-base font-semibold">Performance</h2>
+          <h2 className="text-base font-semibold">Performance & voice commands</h2>
         </div>
         <div className="flex items-center justify-between rounded-md border border-border p-3">
           <div>
@@ -241,6 +269,7 @@ export function SettingsView() {
           </div>
           <Switch id="lite" checked={lite} onCheckedChange={setLite} />
         </div>
+        <WakeWordToggle />
       </Card>
 
       {/* ============== R2D2 agent connection ============== */}
