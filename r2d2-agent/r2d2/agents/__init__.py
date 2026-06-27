@@ -1,14 +1,7 @@
-"""Multi-agent system. Each agent has a deterministic run(task) -> result.
+"""Multi-agent system.
 
-The LLM is used for content generation and high-level strategy only;
-workflow control is hardcoded in the dispatcher.
+Agents are auto-discovered by dispatcher.py at boot.
+Each agent module must export:
+  - async run(task: dict) -> dict
+  - TASK_TYPES: list[str]  (optional — maps task type strings to this agent)
 """
-from . import (  # noqa: F401
-    research_agent,
-    product_agent,
-    listing_agent,
-    upload_agent,
-    marketing_agent,
-    strategy_agent,
-)
-from .dispatcher import dispatch, AGENTS  # noqa: F401

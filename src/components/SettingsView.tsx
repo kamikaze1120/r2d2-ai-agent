@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
-import { api, getApiBase, getModel, setApiBase, setModel } from "@/lib/r2d2-api";
+import {
+  api,
+  getApiBase, setApiBase,
+  getModel, setModel,
+  getLLMProvider, setLLMProvider,
+  getElevenLabsKey, setElevenLabsKey,
+} from "@/lib/r2d2-api";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useR2D2Health } from "@/hooks/useR2D2Health";
 import {
   VOICE_OPTIONS,
@@ -29,6 +36,7 @@ import {
   EyeOff,
   Cpu,
   Zap,
+  BrainCircuit,
 } from "lucide-react";
 import { SafetyAndSchedulerCard } from "@/components/SafetyAndSchedulerCard";
 import {
@@ -42,6 +50,174 @@ import {
   setWakeWordEnabled,
 } from "@/lib/r2d2-settings";
 import { toast } from "sonner";
+
+// ── LLM Provider constants ────────────────────────────────────────────────────
+const PROVIDERS = [
+  { id: "ollama",    label: "Ollama (local, free)",        needsKey: false, needsUrl: false },
+  { id: "anthropic", label: "Anthropic Claude (API)",      needsKey: true,  needsUrl: false },
+  { id: "openai",    label: "OpenAI / GPT (API)",          needsKey: true,  needsUrl: false },
+  { id: "gemini",    label: "Google Gemini (API)",         needsKey: true,  needsUrl: false },
+  { id: "custom",    label: "Custom OpenAI-compatible",    needsKey: true,  needsUrl: true  },
+];
+
+const TIER_COLORS: Record<string, string> = {
+  basic:    "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  standard: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  advanced: "bg-green-500/15 text-green-400 border-green-500/30",
+};
+
+const PROVIDER_MODEL_HINTS: Record<string, string> = {
+  ollama:    "llama3.2  /  mistral  /  phi3  /  qwen2.5",
+  anthropic: "claude-sonnet-4-6  /  claude-haiku-4-5-20251001  /  claude-opus-4-8",
+  openai:    "gpt-4o  /  gpt-4o-mini  /  gpt-3.5-turbo",
+  gemini:    "gemini-1.5-pro  /  gemini-1.5-flash  /  gemini-2.0-flash",
+  custom:    "Any model name your endpoint accepts",
+};
+
+function LLMProviderCard() {
+  const [provider,  setProviderState] = useState(getLLMProvider);
+  const [model,     setModelState]    = useState(getModel);
+  const [apiKey,    setApiKey]        = useState("");
+  const [baseUrl,   setBaseUrl]       = useState("");
+  const [saving,    setSaving]        = useState(false);
+  const [serverCfg, setServerCfg]     = useState<{ capability_tier?: string } | null>(null);
+
+  const providerMeta = PROVIDERS.find(p => p.id === provider) ?? PROVIDERS[0];
+
+  useEffect(() => {
+    api.getLLMConfig().then(setServerCfg).catch(() => {});
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      // Persist provider + model to localStorage for the UI
+      setLLMProvider(provider);
+      setModel(model);
+
+      // Push config to the backend
+      await api.patchLLMConfig({
+        provider,
+        model: model || undefined,
+        api_key: apiKey || undefined,
+        base_url: baseUrl || undefined,
+        ...(provider === "ollama" ? { ollama_host: baseUrl || undefined } : {}),
+      });
+      const updated = await api.getLLMConfig();
+      setServerCfg(updated);
+      toast.success("LLM provider saved", {
+        description: `${provider} · ${model || "default model"} · ${updated.capability_tier} tier`,
+      });
+      setApiKey(""); // clear for security
+    } catch (e: unknown) {
+      toast.error("Failed to save LLM config", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const tier = serverCfg?.capability_tier ?? "basic";
+
+  return (
+    <Card className="space-y-4 p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BrainCircuit className="size-4 text-primary" />
+          <h2 className="text-base font-semibold">LLM Provider</h2>
+        </div>
+        {serverCfg && (
+          <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${TIER_COLORS[tier] ?? ""}`}>
+            {tier} tier
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground -mt-2">
+        Use any local or cloud model. Frontier models (Claude, GPT-4o, Gemini) unlock full JARVIS capability.
+      </p>
+
+      {/* Provider selector */}
+      <div className="space-y-2">
+        <Label htmlFor="provider">Provider</Label>
+        <select
+          id="provider"
+          value={provider}
+          onChange={e => setProviderState(e.target.value)}
+          className="flex h-9 w-full rounded-md border border-input bg-input px-3 py-1 text-sm"
+        >
+          {PROVIDERS.map(p => (
+            <option key={p.id} value={p.id}>{p.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Model name */}
+      <div className="space-y-2">
+        <Label htmlFor="llm-model">Model name</Label>
+        <Input
+          id="llm-model"
+          value={model}
+          onChange={e => setModelState(e.target.value)}
+          placeholder={provider === "ollama" ? "llama3.2" : "e.g. claude-sonnet-4-6"}
+        />
+        <p className="text-xs text-muted-foreground">{PROVIDER_MODEL_HINTS[provider]}</p>
+      </div>
+
+      {/* API key (cloud providers) */}
+      {providerMeta.needsKey && (
+        <div className="space-y-2">
+          <Label htmlFor="llm-key">
+            API key
+            <span className="ml-2 text-xs text-muted-foreground">(sent to backend once · never stored in browser)</span>
+          </Label>
+          <Input
+            id="llm-key"
+            type="password"
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            placeholder={
+              provider === "anthropic" ? "sk-ant-..." :
+              provider === "openai"    ? "sk-..." :
+              provider === "gemini"    ? "AIza..." :
+              "your-api-key"
+            }
+            autoComplete="off"
+          />
+        </div>
+      )}
+
+      {/* Base URL (custom or ollama remote) */}
+      {(providerMeta.needsUrl || provider === "ollama") && (
+        <div className="space-y-2">
+          <Label htmlFor="llm-url">
+            {provider === "ollama" ? "Ollama host URL" : "Custom endpoint URL"}
+          </Label>
+          <Input
+            id="llm-url"
+            value={baseUrl}
+            onChange={e => setBaseUrl(e.target.value)}
+            placeholder={
+              provider === "ollama"
+                ? "http://localhost:11434"
+                : "https://api.groq.com/openai/v1"
+            }
+          />
+          {provider === "custom" && (
+            <p className="text-xs text-muted-foreground">
+              Compatible with Groq, Together AI, LM Studio, Mistral API, and any OpenAI-compatible server.
+            </p>
+          )}
+        </div>
+      )}
+
+      <Button onClick={save} disabled={saving} className="gap-1.5">
+        {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+        Save provider
+      </Button>
+    </Card>
+  );
+}
 
 function WakeWordToggle() {
   const [on, setOn] = useState(false);
@@ -123,9 +299,12 @@ export function SettingsView() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">
-          Point the panel at your local R2D2 agent and pick a model.
+          Configure your AI provider, voice, and agent connection.
         </p>
       </div>
+
+      {/* ============== LLM Provider ============== */}
+      <LLMProviderCard />
 
       {/* ============== API Keys & Integrations ============== */}
       <Card className="space-y-4 p-4">
@@ -347,20 +526,30 @@ export function SettingsView() {
         {loading && <p className="text-xs text-muted-foreground">Checking…</p>}
         {!loading && (
           <ul className="space-y-2 text-sm">
-            <Status ok={connected} label="R2D2 API reachable" detail={connected ? base : error || "not reachable"} />
+            <Status ok={connected} label="R2D2 API reachable"
+              detail={connected ? base : error || "not reachable"} />
             <Status
-              ok={!!health?.ollama.ok}
-              label="Ollama daemon"
-              detail={health?.ollama.host || ollamaBase}
+              ok={!!health?.llm?.ok}
+              label={`LLM provider (${health?.llm?.provider ?? "?"})`}
+              detail={
+                health?.llm?.ok
+                  ? `${health.llm.model} · ${health.llm.capability_tier} tier · ${health.llm.models?.length ?? 0} model(s)`
+                  : "Provider not reachable — check keys / Ollama status"
+              }
             />
             <Status
-              ok={!!health?.ollama.models?.length}
-              label="At least one model installed"
+              ok={!!health?.agents?.length}
+              label="Sub-agents loaded"
               detail={
-                health?.ollama.models?.length
-                  ? `${health.ollama.models.length} available`
-                  : "Run: ollama pull llama3.2"
+                health?.agents?.length
+                  ? `${health.agents.length} online: ${health.agents.join(", ")}`
+                  : "No agents found — check agent terminal for import errors"
               }
+            />
+            <Status
+              ok={!!health?.platforms?.etsy}
+              label="Etsy connected"
+              detail={health?.platforms?.etsy ? "Configured" : "Set ETSY_API_KEY + ETSY_OAUTH_TOKEN + ETSY_SHOP_ID in .env"}
             />
           </ul>
         )}
@@ -370,12 +559,21 @@ export function SettingsView() {
 
       <Card className="space-y-2 p-4">
         <h3 className="text-sm font-semibold">Quick start</h3>
+        <p className="text-xs text-muted-foreground font-medium">macOS / Linux</p>
         <ol className="ml-4 list-decimal space-y-1 text-xs text-muted-foreground">
           <li>Install Ollama: <code>curl -fsSL https://ollama.com/install.sh | sh</code></li>
           <li>Pull a model: <code>ollama pull llama3.2</code></li>
           <li>Start the agent: <code>cd r2d2-agent && ./run.sh</code></li>
-          <li>(Optional) <code>cloudflared tunnel --url http://localhost:8000</code></li>
         </ol>
+        <p className="text-xs text-muted-foreground font-medium mt-2">Windows</p>
+        <ol className="ml-4 list-decimal space-y-1 text-xs text-muted-foreground">
+          <li>Install Ollama from <strong>ollama.com/download/windows</strong></li>
+          <li>Pull a model: <code>ollama pull llama3.2</code></li>
+          <li>Start the agent: <code>cd r2d2-agent; .\run.ps1</code></li>
+        </ol>
+        <p className="text-xs text-muted-foreground mt-2">
+          Or use a cloud model — set your API key above and skip Ollama entirely.
+        </p>
       </Card>
     </div>
   );

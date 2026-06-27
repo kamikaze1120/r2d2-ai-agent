@@ -4,8 +4,11 @@
  * (localhost by default, or a tunnel URL like https://xyz.trycloudflare.com).
  */
 
-const STORAGE_KEY = "r2d2.apiBase";
-const MODEL_KEY = "r2d2.model";
+const STORAGE_KEY      = "r2d2.apiBase";
+const MODEL_KEY        = "r2d2.model";
+const PROVIDER_KEY     = "r2d2.llmProvider";
+const ELEVENLABS_KEY   = "r2d2.elevenLabsKey";
+const VOICE_ID_KEY     = "r2d2.voiceId";
 
 export function getApiBase(): string {
   if (typeof window === "undefined") return "http://localhost:8000";
@@ -20,10 +23,25 @@ export function getModel(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem(MODEL_KEY) || "";
 }
+export function setModel(m: string) { localStorage.setItem(MODEL_KEY, m); }
 
-export function setModel(m: string) {
-  localStorage.setItem(MODEL_KEY, m);
+export function getLLMProvider(): string {
+  if (typeof window === "undefined") return "ollama";
+  return localStorage.getItem(PROVIDER_KEY) || "ollama";
 }
+export function setLLMProvider(p: string) { localStorage.setItem(PROVIDER_KEY, p); }
+
+export function getElevenLabsKey(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(ELEVENLABS_KEY) || "";
+}
+export function setElevenLabsKey(k: string) { localStorage.setItem(ELEVENLABS_KEY, k); }
+
+export function getVoiceId(): string {
+  if (typeof window === "undefined") return "JBFqnCBsd6RMkjVDRZzb";
+  return localStorage.getItem(VOICE_ID_KEY) || "JBFqnCBsd6RMkjVDRZzb";
+}
+export function setVoiceId(id: string) { localStorage.setItem(VOICE_ID_KEY, id); }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(getApiBase() + path, {
@@ -37,15 +55,31 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+export type LLMConfig = {
+  provider: string;           // ollama | anthropic | openai | gemini | custom
+  model: string;
+  capability_tier: "basic" | "standard" | "advanced";
+  ollama_host?: string;
+  openai_base_url?: string;
+  custom_base_url?: string;
+  anthropic_key_set?: boolean;
+  openai_key_set?: boolean;
+  gemini_key_set?: boolean;
+  custom_key_set?: boolean;
+};
+
 export type Health = {
   ok: boolean;
   version: string;
   goal?: string;
-  ollama: { ok: boolean; host: string; models: string[] };
-  default_model: string;
+  llm: LLMConfig & { ok: boolean; models: string[] };
+  ollama: { ok: boolean | null; host: string; models: string[] };
+  agents: string[];
+  tools: string[];
   workspace: string;
-  platforms?: { etsy: boolean; shopify: boolean };
+  platforms?: { etsy: boolean; shopify: boolean; pinterest: boolean };
   approval_threshold?: number;
+  dry_run?: boolean;
   automation?: { alive: boolean; stats: TaskStats };
   scheduler?: SchedulerStatus;
 };
@@ -256,6 +290,17 @@ export const api = {
       `/marketing/queue/${kind}/${encodeURIComponent(id)}/posted`,
       { method: "POST" }),
 
+  // ----- LLM config -----
+  getLLMConfig: () => req<LLMConfig>("/llm-config"),
+  patchLLMConfig: (body: {
+    provider?: string;
+    model?: string;
+    api_key?: string;
+    base_url?: string;
+    ollama_host?: string;
+  }) => req<LLMConfig>("/llm-config", { method: "PATCH", body: JSON.stringify(body) }),
+  listModels: () => req<{ provider: string; models: string[]; capability_tier: string }>("/models"),
+
   // ----- Host filesystem & launcher -----
   hostRoots: () =>
     req<{ restrict: boolean; allowed_roots: string[] }>("/host/fs/roots"),
@@ -278,12 +323,13 @@ export const api = {
 };
 
 export type ChatEvent =
-  | { type: "session"; session_id: string }
-  | { type: "thought"; step: number; text: string }
-  | { type: "tool_call"; step: number; tool: string; args: Record<string, unknown> }
+  | { type: "session";     session_id: string }
+  | { type: "token";       text: string }                           // per-token stream
+  | { type: "thought";     step: number; text: string }
+  | { type: "tool_call";   step: number; tool: string; args: Record<string, unknown> }
   | { type: "tool_result"; step: number; tool: string; result: string }
-  | { type: "final"; text: string }
-  | { type: "error"; message: string };
+  | { type: "final";       text: string }
+  | { type: "error";       message: string };
 
 /** Streams NDJSON chat events from POST /chat. */
 export async function streamChat(

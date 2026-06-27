@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse, FileResponse
 from pydantic import BaseModel
 from . import config, memory as legacy_memory, tools
 from .executor import run_agent
-from .llm import OllamaClient
+from .llm import LLMClient
 from .core import task_manager, scheduler as sched_mod, audit_log
 from .memory import business_memory
 from .analytics import performance_tracker
@@ -16,7 +16,7 @@ from .tools_pkg import etsy_tool, shopify_tool, pinterest_tool
 from .api.host_routes import router as host_router
 
 
-app = FastAPI(title="R2D2 Business Engine", version="0.3.0")
+app = FastAPI(title="R2D2 Business Engine", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,33 +26,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Host-level filesystem + app launcher
 app.include_router(host_router)
 
 
-# ----- Schemas -----
+# ── Schemas ───────────────────────────────────────────────────────────────────
 
 class ChatRequest(BaseModel):
     session_id: str | None = None
     message: str
     model: str | None = None
 
-
 class MemoryCreate(BaseModel):
     text: str
     tags: list[str] = []
 
-
 class SessionCreate(BaseModel):
     title: str | None = None
-
 
 class TaskCreate(BaseModel):
     type: str
     payload: dict = {}
     agent: str | None = None
     priority: int = 0
-
 
 class ListingPatch(BaseModel):
     title: str | None = None
@@ -61,39 +56,55 @@ class ListingPatch(BaseModel):
     price_usd: float | None = None
     confidence: float | None = None
 
-
 class SafetyPatch(BaseModel):
     dry_run: bool | None = None
     approval_threshold: float | None = None
     action_allowlist: list[str] | None = None
 
-
 class JobPatch(BaseModel):
     interval_seconds: int | None = None
     enabled: bool | None = None
 
+class LLMConfigPatch(BaseModel):
+    provider: str | None = None          # ollama|anthropic|openai|gemini|custom
+    model: str | None = None
+    api_key: str | None = None
+    base_url: str | None = None          # for ollama or custom endpoints
+    ollama_host: str | None = None
 
-# ----- Health -----
+
+# ── Health ────────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 async def health():
-    client = OllamaClient()
-    ollama_ok = False
-    models: list[str] = []
+    client = LLMClient()
+    provider_ok = False
+    model_list: list[str] = []
     try:
-        ms = await client.list_models()
-        ollama_ok = True
-        models = [m.get("name") for m in ms]
+        model_list = await client.list_models()
+        provider_ok = True
     except Exception:
         pass
-    finally:
-        await client.aclose()
+
     return {
         "ok": True,
-        "version": "0.3.0",
+        "version": "1.0.0",
         "goal": config.SYSTEM_GOAL,
-        "ollama": {"ok": ollama_ok, "host": config.OLLAMA_HOST, "models": models},
-        "default_model": config.DEFAULT_MODEL,
+        "llm": {
+            "provider": config.LLM_PROVIDER,
+            "model": config.DEFAULT_MODEL,
+            "ok": provider_ok,
+            "models": model_list,
+            "capability_tier": config.get_capability_tier(),
+        },
+        # legacy key kept for backwards compat
+        "ollama": {
+            "ok": provider_ok if config.LLM_PROVIDER == "ollama" else None,
+            "host": config.OLLAMA_HOST,
+            "models": model_list if config.LLM_PROVIDER == "ollama" else [],
+        },
+        "agents": list(dispatcher.AGENTS.keys()),
+        "tools": tools.tool_names(),
         "workspace": str(config.WORKSPACE),
         "platforms": {
             "etsy": etsy_tool.configured(),
@@ -109,34 +120,69 @@ async def health():
 
 @app.get("/models")
 async def list_models():
-    client = OllamaClient()
-    try:
-        return {"models": await client.list_models()}
-    finally:
-        await client.aclose()
+    client = LLMClient()
+    return {
+        "provider": config.LLM_PROVIDER,
+        "models": await client.list_models(),
+        "capability_tier": config.get_capability_tier(),
+    }
 
 
-# ----- Tools -----
+# ── LLM configuration ─────────────────────────────────────────────────────────
+
+@app.get("/llm-config")
+def get_llm_config():
+    return {
+        "provider": config.LLM_PROVIDER,
+        "model": config.DEFAULT_MODEL,
+        "capability_tier": config.get_capability_tier(),
+        "ollama_host": config.OLLAMA_HOST,
+        "openai_base_url": config.OPENAI_BASE_URL,
+        "custom_base_url": config.CUSTOM_LLM_BASE_URL,
+        # Never return actual API keys — only whether they're set
+        "anthropic_key_set": bool(config.ANTHROPIC_API_KEY),
+        "openai_key_set": bool(config.OPENAI_API_KEY),
+        "gemini_key_set": bool(config.GEMINI_API_KEY),
+        "custom_key_set": bool(config.CUSTOM_LLM_API_KEY),
+    }
+
+
+@app.patch("/llm-config")
+def patch_llm_config(body: LLMConfigPatch):
+    if body.ollama_host is not None:
+        config.OLLAMA_HOST = body.ollama_host
+    if body.provider or body.model or body.api_key or body.base_url:
+        config.set_llm_provider(
+            provider=body.provider or config.LLM_PROVIDER,
+            model=body.model,
+            api_key=body.api_key,
+            base_url=body.base_url,
+        )
+    audit_log.log("user", "llm.config", outcome="ok",
+                  detail={"provider": config.LLM_PROVIDER, "model": config.DEFAULT_MODEL})
+    return get_llm_config()
+
+
+# ── Tools ─────────────────────────────────────────────────────────────────────
 
 @app.get("/tools")
 def list_tools():
     return {"tools": [
-        {"name": t["name"], "description": t["description"], "parameters": t["parameters"]}
+        {"name": t["name"], "description": t["description"],
+         "parameters": t["parameters"]}
         for t in tools.all_tools()
     ]}
 
 
-# ----- Sessions / legacy memory -----
+# ── Sessions / legacy memory ──────────────────────────────────────────────────
 
 @app.get("/sessions")
 def get_sessions():
     return {"sessions": legacy_memory.list_sessions()}
 
-
 @app.post("/sessions")
 def post_session(body: SessionCreate):
     return legacy_memory.create_session(body.title)
-
 
 @app.get("/sessions/{sid}")
 def get_session(sid: str):
@@ -145,23 +191,19 @@ def get_session(sid: str):
         raise HTTPException(404, "Session not found")
     return s
 
-
 @app.delete("/sessions/{sid}")
 def del_session(sid: str):
     if not legacy_memory.delete_session(sid):
         raise HTTPException(404, "Not found")
     return {"ok": True}
 
-
 @app.get("/memories")
 def get_memories():
     return {"memories": legacy_memory.list_memories()}
 
-
 @app.post("/memories")
 def post_memory(body: MemoryCreate):
     return legacy_memory.add_memory(body.text, body.tags)
-
 
 @app.delete("/memories/{mid}")
 def del_memory(mid: str):
@@ -170,24 +212,17 @@ def del_memory(mid: str):
     return {"ok": True}
 
 
-# ============================================================
-# BUSINESS ENGINE
-# ============================================================
-
-# --- Tasks ---
+# ── Business engine ───────────────────────────────────────────────────────────
 
 @app.get("/tasks")
-def list_tasks(status: str | None = None, type: str | None = None,
-               limit: int = 200):
+def list_tasks(status: str | None = None, type: str | None = None, limit: int = 200):
     return {"tasks": task_manager.list_tasks(status=status, type=type, limit=limit),
             "stats": task_manager.stats()}
-
 
 @app.post("/tasks")
 def create_task(body: TaskCreate):
     return task_manager.create_task(body.type, body.payload,
                                     agent=body.agent, priority=body.priority)
-
 
 @app.get("/tasks/{tid}")
 def get_task(tid: str):
@@ -195,7 +230,6 @@ def get_task(tid: str):
     if not t:
         raise HTTPException(404, "Not found")
     return t
-
 
 @app.post("/tasks/{tid}/approve")
 def approve(tid: str):
@@ -205,7 +239,6 @@ def approve(tid: str):
     audit_log.log("user", "approval.approve", target=tid, outcome="ok")
     return t
 
-
 @app.post("/tasks/{tid}/reject")
 def reject(tid: str):
     t = task_manager.reject_task(tid)
@@ -214,7 +247,6 @@ def reject(tid: str):
     audit_log.log("user", "approval.reject", target=tid, outcome="ok")
     return t
 
-
 @app.delete("/tasks/{tid}")
 def del_task(tid: str):
     if not task_manager.delete_task(tid):
@@ -222,12 +254,11 @@ def del_task(tid: str):
     return {"ok": True}
 
 
-# --- Niches & products ---
+# ── Niches & products ─────────────────────────────────────────────────────────
 
 @app.get("/niches")
 def list_niches(status: str | None = None):
     return {"niches": business_memory.list_niches(status)}
-
 
 @app.get("/products")
 def list_products(status: str | None = None):
@@ -236,25 +267,19 @@ def list_products(status: str | None = None):
         p["metrics"] = performance_tracker.product_metrics(p["id"])
     return {"products": items}
 
-
 @app.get("/products/{pid}/file")
 def download_product_file(pid: str):
-    p = next((x for x in business_memory.list_products()
-              if x["id"] == pid), None)
+    p = next((x for x in business_memory.list_products() if x["id"] == pid), None)
     if not p or not p.get("file_path"):
         raise HTTPException(404, "Not found")
     return FileResponse(p["file_path"])
 
-
 @app.patch("/products/{pid}/listing")
 def patch_listing(pid: str, body: ListingPatch):
-    p = next((x for x in business_memory.list_products()
-              if x["id"] == pid), None)
+    p = next((x for x in business_memory.list_products() if x["id"] == pid), None)
     if not p:
         raise HTTPException(404, "Not found")
-    listing = dict(p.get("listing")
-                   or p.get("metadata", {}).get("listing")
-                   or {})
+    listing = dict(p.get("listing") or p.get("metadata", {}).get("listing") or {})
     patch = body.model_dump(exclude_none=True)
     if "tags" in patch:
         patch["tags"] = [t[:20] for t in patch["tags"]][:13]
@@ -265,7 +290,7 @@ def patch_listing(pid: str, body: ListingPatch):
     return {"ok": True, "listing": listing}
 
 
-# --- Analytics ---
+# ── Analytics ─────────────────────────────────────────────────────────────────
 
 @app.get("/analytics/overview")
 def analytics_overview(window_days: int = 30):
@@ -281,7 +306,7 @@ def analytics_overview(window_days: int = 30):
     }
 
 
-# --- Marketing queues ---
+# ── Marketing queues ──────────────────────────────────────────────────────────
 
 @app.get("/marketing/queue/{kind}")
 def marketing_queue(kind: str):
@@ -290,26 +315,22 @@ def marketing_queue(kind: str):
     return {"items": marketing_agent.list_queue(kind),
             "pinterest_configured": pinterest_tool.configured()}
 
-
 @app.post("/marketing/queue/{kind}/{item_id}/posted")
 def mark_posted(kind: str, item_id: str):
     if not marketing_agent.mark_posted(kind, item_id):
         raise HTTPException(404, "Not found")
-    audit_log.log("user", f"marketing.{kind}.posted", target=item_id,
-                  outcome="ok")
+    audit_log.log("user", f"marketing.{kind}.posted", target=item_id, outcome="ok")
     return {"ok": True}
 
 
-# --- Audit log ---
+# ── Audit log ─────────────────────────────────────────────────────────────────
 
 @app.get("/audit")
-def get_audit(limit: int = 200, action: str | None = None,
-              outcome: str | None = None):
-    return {"entries": audit_log.list_entries(limit=limit, action=action,
-                                              outcome=outcome)}
+def get_audit(limit: int = 200, action: str | None = None, outcome: str | None = None):
+    return {"entries": audit_log.list_entries(limit=limit, action=action, outcome=outcome)}
 
 
-# --- Automation control ---
+# ── Automation control ────────────────────────────────────────────────────────
 
 @app.get("/automation")
 def automation_status():
@@ -321,20 +342,17 @@ def automation_status():
         "dry_run": config.DRY_RUN,
     }
 
-
 @app.post("/automation/start")
 def automation_start():
     dispatcher.start_worker()
     sched_mod.scheduler.enable()
     return automation_status()
 
-
 @app.post("/automation/stop")
 def automation_stop():
     dispatcher.stop_worker()
     sched_mod.scheduler.disable()
     return automation_status()
-
 
 @app.post("/automation/trigger/{job_name}")
 def automation_trigger(job_name: str):
@@ -343,7 +361,6 @@ def automation_trigger(job_name: str):
         raise HTTPException(404, f"job {job_name} not found")
     return {"ok": True, "triggered": job_name}
 
-
 @app.patch("/automation/jobs/{job_name}")
 def patch_job(job_name: str, body: JobPatch):
     if body.interval_seconds is not None:
@@ -351,7 +368,6 @@ def patch_job(job_name: str, body: JobPatch):
     if body.enabled is not None:
         sched_mod.scheduler.set_enabled(job_name, body.enabled)
     return automation_status()
-
 
 @app.patch("/automation/safety")
 def patch_safety(body: SafetyPatch):
@@ -370,7 +386,7 @@ def patch_safety(body: SafetyPatch):
     return automation_status()
 
 
-# ----- Chat -----
+# ── Chat ──────────────────────────────────────────────────────────────────────
 
 @app.post("/chat")
 async def chat(req: ChatRequest):
@@ -386,10 +402,11 @@ async def chat(req: ChatRequest):
     return StreamingResponse(gen(), media_type="application/x-ndjson")
 
 
-# ----- Bootstrap -----
+# ── Bootstrap ─────────────────────────────────────────────────────────────────
 
 @app.on_event("startup")
 def _startup() -> None:
+    config.load_persisted_settings()
     sched_mod.register_default_jobs()
 
 
