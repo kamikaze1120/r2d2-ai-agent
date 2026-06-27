@@ -10,6 +10,15 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+
+# Python
+r2d2-agent/.venv/
+r2d2-agent/__pycache__/
+r2d2-agent/**/__pycache__/
+r2d2-agent/**/*.pyc
+
+# Secrets
+r2d2-agent/.env
 .output
 .vinxi
 .tanstack/**

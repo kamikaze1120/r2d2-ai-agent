@@ -128,10 +128,10 @@ async def upload_listing_image(listing_id: int, image_path: str,
         return {"ok": False, "error": "Etsy not configured"}
     await _ensure_token()
     url = (f"{BASE}/shops/{config.ETSY_SHOP_ID}/listings/{listing_id}/images")
+    _tok = _token_cache.get("access_token") or config.ETSY_OAUTH_TOKEN or ""
     headers = {
         "x-api-key": config.ETSY_API_KEY or "",
-        "Authorization": f"Bearer {(_token_cache.get('access_token')
-                                    or config.ETSY_OAUTH_TOKEN or '')}",
+        "Authorization": f"Bearer {_tok}",
     }
     with open(image_path, "rb") as f:
         files = {"image": (image_path.split("/")[-1], f.read())}
@@ -155,10 +155,10 @@ async def upload_listing_file(listing_id: int, file_path: str,
         return {"ok": False, "error": "Etsy not configured"}
     await _ensure_token()
     url = (f"{BASE}/shops/{config.ETSY_SHOP_ID}/listings/{listing_id}/files")
+    _tok = _token_cache.get("access_token") or config.ETSY_OAUTH_TOKEN or ""
     headers = {
         "x-api-key": config.ETSY_API_KEY or "",
-        "Authorization": f"Bearer {(_token_cache.get('access_token')
-                                    or config.ETSY_OAUTH_TOKEN or '')}",
+        "Authorization": f"Bearer {_tok}",
     }
     with open(file_path, "rb") as f:
         files = {"file": (name or file_path.split("/")[-1], f.read())}
