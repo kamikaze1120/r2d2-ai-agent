@@ -92,7 +92,7 @@ R2D2_LLM_PROVIDER=ollama
 R2D2_MODEL=llama3.2
 ```
 
-**Option B — Anthropic Claude (recommended for full JARVIS)**
+**Option B — Anthropic Claude (recommended for full capability)**
 ```bash
 # .env:
 R2D2_LLM_PROVIDER=anthropic
@@ -186,7 +186,7 @@ R2D2 automatically adjusts its behaviour to match your model's capability:
 |---|---|---|
 | **basic** | Ollama <7B (phi3, llama3.2:1b) | Chat, file ops, simple Q&A |
 | **standard** | Ollama 7–13B (mistral, qwen2.5, llama3.2) | Research, product generation, multi-step tasks |
-| **advanced** | Claude, GPT-4o, Gemini 1.5 Pro, Ollama 70B | Full JARVIS — browser, email, orchestration, strategy |
+| **advanced** | Claude, GPT-4o, Gemini 1.5 Pro, Ollama 70B | Full capability — browser, email, orchestration, strategy |
 
 ---
 

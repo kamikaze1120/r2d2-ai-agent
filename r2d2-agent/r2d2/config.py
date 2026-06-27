@@ -65,7 +65,7 @@ def get_capability_tier() -> str:
     """
     Returns 'basic' | 'standard' | 'advanced' based on the active provider/model.
 
-    - advanced : frontier API models (Claude, GPT-4o, Gemini 1.5 Pro) — full JARVIS
+    - advanced : frontier API models (Claude, GPT-4o, Gemini 1.5 Pro) — full capability
     - standard : mid-size local models (7-13B) or cheaper APIs — research & products
     - basic    : small local models (<7B) — conversation, simple tasks
     """

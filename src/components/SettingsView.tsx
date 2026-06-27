@@ -134,7 +134,7 @@ function LLMProviderCard() {
         )}
       </div>
       <p className="text-xs text-muted-foreground -mt-2">
-        Use any local or cloud model. Frontier models (Claude, GPT-4o, Gemini) unlock full JARVIS capability.
+        Use any local or cloud model. Frontier models (Claude, GPT-4o, Gemini) unlock full R2D2 capability.
       </p>
 
       {/* Provider selector */}
