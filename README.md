@@ -1,382 +1,301 @@
-<div align="center">
+<p align="center">
+  <img src="./.github/readme/hero.svg" width="100%" alt="R2D2 — local-first AI agent with a FastAPI core and a React control panel">
+</p>
 
-<img src="docs/r2d2-hero.png" alt="R2D2 astromech droid" width="220" />
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&amp;weight=600&amp;size=18&amp;duration=2600&amp;pause=700&amp;color=F4C65A&amp;center=true&amp;vCenter=true&amp;width=850&amp;height=42&amp;lines=Ollama%2C+Claude%2C+GPT%2C+Gemini+or+any+OpenAI-compatible+endpoint.;8+auto-discovered+sub-agents+and+22+registered+tools.;Low-confidence+uploads+wait+for+your+approval.;Speaks+back+through+ElevenLabs+%E2%80%94+bring+your+own+key." alt="Typing summary of R2D2 capabilities">
+</p>
 
-# R2D2
+<p align="center">
+  <a href="https://github.com/kamikaze1120/r2d2-ai-agent/commits/main"><img src="https://img.shields.io/github/last-commit/kamikaze1120/r2d2-ai-agent?style=for-the-badge&amp;labelColor=15103A&amp;color=F4C65A" alt="Last commit"></a>
+  <img src="https://img.shields.io/github/languages/top/kamikaze1120/r2d2-ai-agent?style=for-the-badge&amp;labelColor=15103A&amp;color=BD3CFF" alt="Top language">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-F4C65A?style=for-the-badge&amp;logo=python&amp;logoColor=white&amp;labelColor=15103A" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/React-19-CB55FF?style=for-the-badge&amp;logo=react&amp;logoColor=white&amp;labelColor=15103A" alt="React 19">
+</p>
 
-### Your local-first AI butler & autonomous business engine.
+**R2D2** is a two-piece, local-first AI agent: a **Python/FastAPI agent core** that plans, calls tools, dispatches sub-agents and keeps memory on your machine, plus a **React 19 control panel** where you chat with it, watch its task queue, approve its actions and hear it talk back. Out of the box it is pointed at running a digital-product business (research → product → listing → upload → marketing), with dry-run mode and an approval gate in front of external writes.
 
-<br/>
+<p align="center"><sub><code>LOCAL-FIRST</code> ✦ <code>MULTI-LLM</code> ✦ <code>SUB-AGENTS</code> ✦ <code>TOOL CALLING</code> ✦ <code>VOICE</code> ✦ <code>HUMAN APPROVALS</code></sub></p>
 
-[![Made by Mohammed](https://img.shields.io/badge/Made%20by-Mohammed-22d3ee?style=for-the-badge&labelColor=0f172a)](#)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white&labelColor=0f172a)](#)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black&labelColor=0f172a)](#)
-[![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=0f172a)](#)
+<h2 align="center">✦ WHAT IT DOES ✦</h2>
+<p align="center"><sub>CAPABILITIES VERIFIED AGAINST THE CODE</sub></p>
 
-<br/>
+<table>
+  <tr>
+    <td width="33%" valign="top">🔀 <b>Any LLM</b><br><sub>One client for Ollama, Anthropic, OpenAI, Gemini and any OpenAI-compatible URL (Groq, Together, LM Studio). Switch it live via <code>PATCH /llm-config</code> or Settings.</sub></td>
+    <td width="33%" valign="top">🧩 <b>8 sub-agents</b><br><sub>Research, product, listing, upload, marketing, strategy, browser and email. Any <code>.py</code> in <code>r2d2/agents/</code> with an async <code>run(task)</code> is auto-registered.</sub></td>
+    <td width="33%" valign="top">🛠️ <b>22 tools</b><br><sub>Workspace file ops, shell, DuckDuckGo search, memory, math, 7 Playwright browser tools and 3 SMTP/IMAP email tools.</sub></td>
+  </tr>
+  <tr>
+    <td valign="top">📈 <b>Capability tiers</b><br><sub>Provider + model name map to <code>basic</code> / <code>standard</code> / <code>advanced</code>, reported on <code>/health</code>.</sub></td>
+    <td valign="top">🤖 <b>Autonomous mode</b><br><sub>The scheduler seeds a daily business run, a daily analytics sync and a weekly strategy review; a strategy review also fires every 5 published products.</sub></td>
+    <td valign="top">🛡️ <b>Approvals &amp; dry run</b><br><sub>Listings below <code>R2D2_APPROVAL_THRESHOLD</code> wait in the Approvals queue. <code>R2D2_DRY_RUN</code> turns Etsy, Shopify and Pinterest writes into previews.</sub></td>
+  </tr>
+  <tr>
+    <td valign="top">🎙️ <b>Voice in, voice out</b><br><sub>ElevenLabs TTS through a server function (your own key or an env key) and a Web Speech listener with a “Hey R2D2” wake phrase.</sub></td>
+    <td valign="top">🌐 <b>Three.js orb</b><br><sub>The cockpit's wireframe orb pulses with the live TTS amplitude.</sub></td>
+    <td valign="top">📜 <b>Audit trail</b><br><sub>Platform calls, safety changes and host actions are written to an audit log you can browse in the panel.</sub></td>
+  </tr>
+</table>
+
+<h2 align="center">◈ ARCHITECTURE ◈</h2>
+<p align="center"><sub>BROWSER COCKPIT ⇄ LOCAL AGENT CORE</sub></p>
+
+```mermaid
+flowchart LR
+  subgraph Panel["React 19 control panel · TanStack Start"]
+    UI["Cockpit · Chat · Tasks · Products<br/>Approvals · Marketing · Audit · Memory"]
+    TTS["ElevenLabs TTS<br/>server function"]
+  end
+  subgraph Core["r2d2-agent · FastAPI :8000"]
+    API["HTTP API<br/>/chat streams NDJSON"]
+    EXE["Executor<br/>plan → tool → observe"]
+    LLM["LLMClient<br/>ollama · anthropic · openai · gemini · custom"]
+    DSP["Dispatcher<br/>8 sub-agents"]
+    TOOLS["Tool registry<br/>files · shell · search · browser · email"]
+    SCH["Scheduler · Task queue · Audit log"]
+    MEM[("~/.r2d2<br/>memory · sessions · settings")]
+  end
+  EXT["Etsy · Shopify · Pinterest<br/>(dry-run aware)"]
+  UI -- "HTTP / NDJSON" --> API
+  UI --> TTS
+  API --> EXE --> LLM
+  EXE --> TOOLS
+  API --> DSP --> TOOLS
+  DSP --> EXT
+  SCH --> DSP
+  EXE --> MEM
+  classDef gold fill:#1d1732,stroke:#F4C65A,color:#ffe7a2
+  classDef violet fill:#160f38,stroke:#BD3CFF,color:#f0d7ff
+  classDef night fill:#071331,stroke:#B17A23,color:#fff0b7
+  class UI,TTS violet
+  class API,EXE,LLM,DSP,TOOLS,SCH gold
+  class MEM,EXT night
+```
+
+<details>
+<summary><b>Autonomous workflow chain</b> (hard-coded in <code>agents/dispatcher.py</code>, no LLM in the control loop)</summary>
 
 ```
-"At your service, Sir."  —  R2D2
+research_niches
+  → create_product (top 3 niches)
+      → create_listing
+          → upload_product   (held for approval if confidence < threshold)
+              → generate_marketing
+                  [every 5 products] → strategy_review
 ```
 
-</div>
+</details>
 
----
+<h2 align="center">◆ TECH STACK ◆</h2>
+<p align="center"><sub>WHAT ACTUALLY SHIPS IN THIS REPO</sub></p>
 
-## What is R2D2?
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=python,fastapi,ts,react,vite,tailwind,threejs,cloudflare&amp;theme=dark" alt="Python, FastAPI, TypeScript, React, Vite, Tailwind CSS, Three.js, Cloudflare">
+</p>
 
-R2D2 is a **two-piece** project:
-
-| | |
+| Layer | What's used |
 |---|---|
-| 🧠 **Agent core** (`r2d2-agent/`) | Python backend — plans tasks, calls tools, orchestrates sub-agents, remembers context. Runs on your machine. |
-| 🖥️ **Control panel** (`src/`) | React 19 cockpit — stream chats, watch reasoning, manage tasks, hear R2D2 speak. Runs in the browser. |
+| Agent core | Python 3.10+, FastAPI, Uvicorn, httpx, Pydantic, python-dotenv, filelock |
+| LLM SDKs | `anthropic`, `openai`, `google-generativeai`; Ollama over HTTP |
+| Tools | `duckduckgo-search`, Playwright (Chromium), ReportLab + Pillow for generated PDFs |
+| Control panel | React 19, TanStack Start / Router / Query, Tailwind CSS 4, Radix UI, Recharts, Three.js |
+| Panel runtime | Vite 7 with a Cloudflare Workers target (`wrangler.jsonc`) |
 
----
+<h2 align="center">✦ QUICK START ✦</h2>
+<p align="center"><sub>TWO TERMINALS · ABOUT FIVE MINUTES</sub></p>
 
-## Highlights
-
-- 🔀 **Any LLM** — Ollama (local/free), Claude, GPT-4o, Gemini, or any OpenAI-compatible endpoint (Groq, Together, LM Studio)
-- 🧩 **8 sub-agents** — research, product, listing, upload, marketing, strategy, browser, email
-- 🌐 **Browser automation** — Playwright navigates, clicks, fills forms, and scrapes any site
-- 📧 **Email** — read, search, and send via SMTP/IMAP (Gmail, Outlook, etc.)
-- 🎙️ **Cinematic voice** — ElevenLabs TTS, BYOK, George's refined British voice
-- 📈 **Capability tiers** — R2D2 scales its ambitions to match your model (basic → standard → advanced)
-- 🤖 **Autonomous mode** — scheduled jobs, proactive strategy reviews
-- 🔒 **Local-first** — your data stays on your machine
-
----
-
-## Quick Start (5 minutes)
-
-### Prerequisites
-
-| Tool | Why | Install |
-|---|---|---|
-| **Python 3.10+** | Agent backend | https://python.org/downloads |
-| **Node.js 20+** | Web panel | https://nodejs.org |
-| **Git** | Clone the repo | https://git-scm.com |
-| **Ollama** *(optional)* | Free local LLM | https://ollama.com/download |
-
-> If you have an API key for Claude, GPT-4o, or Gemini — you can skip Ollama entirely.
-
----
-
-### Step 1 — Clone
+**Prerequisites:** Python 3.10+, Node.js, and either [Ollama](https://ollama.com/download) or an API key for Claude / OpenAI / Gemini / an OpenAI-compatible host.
 
 ```bash
 git clone https://github.com/kamikaze1120/r2d2-ai-agent.git
 cd r2d2-ai-agent
 ```
 
----
-
-### Step 2 — Configure
+**1 · Boot the agent core**
 
 ```bash
 cd r2d2-agent
-cp .env.example .env   # then edit .env with your keys
+./run.sh          # Windows PowerShell: .\run.ps1
 ```
 
-The only required setting is which LLM provider to use. Pick one:
+The script copies `.env.example` → `.env` on first run, creates `.venv/`, installs `requirements.txt`, installs Playwright Chromium, then starts the API on **http://localhost:8000**.
 
-**Option A — Ollama (free, local)**
-```bash
-# Pull a model first:
-ollama pull llama3.2      # 2 GB, fast, capability: basic
-ollama pull mistral       # 4 GB, balanced, capability: standard
-ollama pull qwen2.5       # 4 GB, excellent tool use, capability: standard
-
-# .env:
-R2D2_LLM_PROVIDER=ollama
-R2D2_MODEL=llama3.2
-```
-
-**Option B — Anthropic Claude (recommended for full capability)**
-```bash
-# .env:
-R2D2_LLM_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-ant-...
-R2D2_MODEL=claude-sonnet-4-6
-```
-
-**Option C — OpenAI / GPT**
-```bash
-# .env:
-R2D2_LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
-R2D2_MODEL=gpt-4o
-```
-
-**Option D — Google Gemini**
-```bash
-# .env:
-R2D2_LLM_PROVIDER=gemini
-GEMINI_API_KEY=AIza...
-R2D2_MODEL=gemini-1.5-pro
-```
-
-**Option E — Custom OpenAI-compatible (Groq, Together, LM Studio…)**
-```bash
-# .env:
-R2D2_LLM_PROVIDER=custom
-CUSTOM_LLM_BASE_URL=https://api.groq.com/openai/v1
-CUSTOM_LLM_API_KEY=gsk_...
-R2D2_MODEL=llama-3.1-70b-versatile
-```
-
-You can also change the provider at any time from **Settings → LLM Provider** in the web panel — no restart needed.
-
----
-
-### Step 3 — Boot the agent
-
-**macOS / Linux:**
-```bash
-cd r2d2-agent
-./run.sh
-```
-
-**Windows (PowerShell):**
-```powershell
-cd r2d2-agent
-.\run.ps1
-```
-
-The script:
-1. Creates a Python virtual environment (`.venv/`)
-2. Installs all dependencies
-3. Installs Playwright Chromium for browser automation
-4. Starts the FastAPI server at **http://localhost:8000**
-
-Verify it's running:
 ```bash
 curl http://localhost:8000/health
 ```
 
----
-
-### Step 4 — Boot the web panel
+**2 · Boot the control panel** (from the repo root)
 
 ```bash
-# from the project root
 npm install
 npm run dev
 ```
 
-Open **http://localhost:5173** (or the port shown).
+Open the URL Vite prints → **Settings** → confirm the API base URL is `http://localhost:8000`, pick a provider and model, then give R2D2 a command from the **Cockpit** or **Chat**.
 
----
+<details>
+<summary><b>Pick an LLM provider</b> (<code>r2d2-agent/.env</code>)</summary>
 
-### Step 5 — First contact
-
-1. Open the panel → **Settings**
-2. Confirm **API base URL** = `http://localhost:8000`
-3. Under **LLM Provider** — pick your provider and model, save
-4. Status should show 🟢 online
-5. Head to **Cockpit** and type a command
-
----
-
-## Capability Tiers
-
-R2D2 automatically adjusts its behaviour to match your model's capability:
-
-| Tier | Models | What R2D2 can do |
-|---|---|---|
-| **basic** | Ollama <7B (phi3, llama3.2:1b) | Chat, file ops, simple Q&A |
-| **standard** | Ollama 7–13B (mistral, qwen2.5, llama3.2) | Research, product generation, multi-step tasks |
-| **advanced** | Claude, GPT-4o, Gemini 1.5 Pro, Ollama 70B | Full capability — browser, email, orchestration, strategy |
-
----
-
-## Sub-agents
-
-R2D2's brain dispatches tasks to specialised sub-agents. **Auto-discovered** at boot — drop a new `.py` file with an async `run(task)` function in `r2d2-agent/r2d2/agents/` and it loads automatically.
-
-| Agent | What it owns |
+| Provider | Set |
 |---|---|
-| 🔭 **research_agent** | Niche scouting, trend analysis, keyword discovery |
-| 🎨 **product_agent** | Generates digital products (PDFs, ebooks, wall art) |
-| 📝 **listing_agent** | Writes SEO titles, descriptions, tags |
-| 📣 **marketing_agent** | Pinterest pins, social copy |
-| 🧭 **strategy_agent** | Reviews performance, suggests pivots (auto-triggers every 5 products) |
-| 🚀 **upload_agent** | Publishes to Etsy / Shopify with confidence gating |
-| 🌐 **browser_agent** | Playwright web automation — navigate, click, scrape, screenshot |
-| 📧 **email_agent** | Read, search, and send email via SMTP/IMAP |
+| Ollama (default) | `R2D2_LLM_PROVIDER=ollama`, `OLLAMA_HOST`, `R2D2_MODEL` (e.g. `llama3.2`, `mistral`, `qwen2.5`) |
+| Anthropic | `R2D2_LLM_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, `R2D2_MODEL` |
+| OpenAI | `R2D2_LLM_PROVIDER=openai`, `OPENAI_API_KEY`, `R2D2_MODEL` (optional `OPENAI_BASE_URL`) |
+| Gemini | `R2D2_LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, `R2D2_MODEL` |
+| OpenAI-compatible | `R2D2_LLM_PROVIDER=custom`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY`, `R2D2_MODEL` |
 
-### Workflow chain (autonomous mode)
+**Capability tier** (`config.get_capability_tier()`): Anthropic → `advanced`; OpenAI → `advanced` unless the model name contains `mini`/`3.5`; Gemini → `advanced` unless it is a `flash` model; Ollama and custom models are tiered by size hints in the name (`7b`/`8b`/`13b`… → `standard`, `70b`/`72b` → `advanced`, otherwise `basic`).
 
-```
-research_niches
-  → create_product (×3)
-      → create_listing
-          → upload_product (held for approval if confidence < threshold)
-              → generate_marketing
-                  [every 5 products] → strategy_review
-```
+</details>
 
----
+<details>
+<summary><b>All environment variables</b> (names only — see <code>r2d2-agent/.env.example</code>)</summary>
 
-## Tools available to R2D2
+| Group | Variables |
+|---|---|
+| Server | `R2D2_HOST`, `R2D2_PORT`, `R2D2_ALLOWED_ORIGINS` |
+| LLM | `R2D2_LLM_PROVIDER`, `R2D2_MODEL`, `OLLAMA_HOST`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `GEMINI_API_KEY`, `CUSTOM_LLM_BASE_URL`, `CUSTOM_LLM_API_KEY` |
+| Agent | `R2D2_MAX_ITERATIONS` (default 12), `R2D2_GOAL`, `R2D2_DAILY_RUN_SECONDS` |
+| Safety | `R2D2_SHELL_ALLOWLIST`, `R2D2_APPROVAL_THRESHOLD` (default 0.8), `R2D2_DRY_RUN`, `R2D2_ACTION_ALLOWLIST`, `R2D2_FS_RESTRICT`, `R2D2_FS_EXTRA_ROOT` |
+| Voice | `ELEVENLABS_API_KEY` (or paste your own key in Settings → Voice) |
+| Email | `EMAIL_ADDRESS`, `EMAIL_PASSWORD`, `EMAIL_SMTP_HOST`, `EMAIL_SMTP_PORT`, `EMAIL_IMAP_HOST` |
+| Etsy | `ETSY_API_KEY`, `ETSY_OAUTH_TOKEN`, `ETSY_REFRESH_TOKEN`, `ETSY_SHOP_ID` |
+| Shopify | `SHOPIFY_STORE`, `SHOPIFY_ADMIN_TOKEN` |
+| Pinterest | `PINTEREST_ACCESS_TOKEN`, `PINTEREST_BOARD_ID` |
+| Storage | `R2D2_DATA_DIR` (default `~/.r2d2`), `R2D2_WORKSPACE` (default `~/.r2d2/workspace`) |
+
+Missing platform credentials simply disable that platform — R2D2 still boots.
+
+</details>
+
+<h2 align="center">◈ SUB-AGENTS &amp; TOOLS ◈</h2>
+<p align="center"><sub>DROP IN A FILE · RESTART · IT'S LIVE</sub></p>
+
+| Sub-agent | Owns |
+|---|---|
+| 🔭 `research_agent` | Niche scouting and keyword discovery |
+| 🎨 `product_agent` | Generates real files — planner / ebook PDFs via ReportLab |
+| 📝 `listing_agent` | SEO titles, descriptions and tags |
+| 🚀 `upload_agent` | Publishes to Etsy / Shopify behind the confidence gate |
+| 📣 `marketing_agent` | Pinterest pin copy — posts when configured, otherwise queues |
+| 🧭 `strategy_agent` | Performance review and pivot suggestions |
+| 🌐 `browser_agent` | Playwright navigation, clicks, form fill, scraping |
+| 📧 `email_agent` | Read, search and send mail over IMAP / SMTP |
+
+<details>
+<summary><b>Registered tools</b> (<code>r2d2/tools.py</code>)</summary>
 
 | Tool | Description |
 |---|---|
-| `read_file` / `write_file` / `append_file` / `delete_file` | Workspace file ops |
-| `list_dir` | List workspace directory |
-| `shell` | Run shell commands (sandboxed, allowlist-configurable) |
-| `web_search` | DuckDuckGo search (no key required) |
-| `remember` / `recall` | Long-term memory (persistent JSON) |
-| `datetime` | Current date and time |
-| `calculate` | Evaluate math expressions |
-| `browser_navigate` | Open a URL in Chromium |
-| `browser_read` | Read page text |
-| `browser_click` | Click an element |
-| `browser_fill` | Fill a form field |
-| `browser_screenshot` | Capture the current page |
-| `browser_search` | Full browser-based web search |
-| `browser_js` | Run JavaScript on the page |
-| `email_send` | Send email via SMTP |
-| `email_read` | Read recent emails (IMAP) |
-| `email_search` | Search emails by subject/sender |
-| `final_answer` | Deliver the response to the user |
+| `read_file` · `write_file` · `append_file` · `delete_file` · `list_dir` | File ops confined to the workspace (paths that escape it are refused) |
+| `shell` | Runs in the workspace with a 60 s timeout; restrict with `R2D2_SHELL_ALLOWLIST` |
+| `web_search` | DuckDuckGo search, no key needed |
+| `remember` · `recall` | Long-term memory in file-locked JSON |
+| `datetime` · `calculate` | Clock and math |
+| `browser_navigate` · `browser_read` · `browser_click` · `browser_fill` · `browser_screenshot` · `browser_search` · `browser_js` | Playwright Chromium (registered when Playwright is installed) |
+| `email_send` · `email_read` · `email_search` | SMTP / IMAP |
+| `final_answer` | Ends the loop with the reply |
 
----
+</details>
 
-## Platform integrations
-
-Set these in `.env` — missing values just disable that platform:
-
-```bash
-# Etsy
-ETSY_API_KEY=...          # from developers.etsy.com
-ETSY_OAUTH_TOKEN=...      # access token from OAuth flow
-ETSY_REFRESH_TOKEN=...    # for automatic token rotation
-ETSY_SHOP_ID=...          # your shop numeric ID
-
-# Shopify
-SHOPIFY_STORE=mystore.myshopify.com
-SHOPIFY_ADMIN_TOKEN=shpat_...
-
-# Pinterest
-PINTEREST_ACCESS_TOKEN=...
-PINTEREST_BOARD_ID=...
-
-# Email (SMTP/IMAP — works with Gmail App Passwords)
-EMAIL_ADDRESS=you@gmail.com
-EMAIL_PASSWORD=xxxx-xxxx-xxxx-xxxx   # App Password
-EMAIL_SMTP_HOST=smtp.gmail.com
-EMAIL_IMAP_HOST=imap.gmail.com
-
-# ElevenLabs voice (users can also set this in the web panel)
-ELEVENLABS_API_KEY=sk_...
-```
-
----
-
-## Health check
-
-```bash
-curl -s http://localhost:8000/health | python3 -m json.tool
-```
-
-A healthy response:
-```json
-{
-  "ok": true,
-  "version": "1.0.0",
-  "llm": {
-    "provider": "ollama",
-    "model": "llama3.2",
-    "ok": true,
-    "capability_tier": "basic"
-  },
-  "agents": ["research_agent", "product_agent", "listing_agent", "upload_agent",
-             "marketing_agent", "strategy_agent", "browser_agent", "email_agent"],
-  "tools": ["read_file", "write_file", "shell", "web_search", "remember", "recall",
-            "browser_navigate", "browser_read", "email_send", "email_read", ...]
-}
-```
-
----
-
-## Safety
-
-- File and shell tools are sandboxed to `~/.r2d2/workspace`
-- Shell restricted with `R2D2_SHELL_ALLOWLIST=ls,cat,git`
-- Approval mode holds low-confidence uploads for human review
-- `R2D2_DRY_RUN=true` — no real writes to Etsy/Shopify/Pinterest
-- LAN-only: `R2D2_HOST=127.0.0.1`
-
----
-
-## Reach R2D2 from your phone
-
-```bash
-# Cloudflare (free)
-cloudflared tunnel --url http://localhost:8000
-
-# or ngrok
-ngrok http 8000
-```
-
-Paste the public URL into **Settings → R2D2 API base URL**.
-
----
-
-## Adding a custom sub-agent
-
-1. Create `r2d2-agent/r2d2/agents/my_agent.py`:
+<details>
+<summary><b>Add your own sub-agent</b></summary>
 
 ```python
+# r2d2-agent/r2d2/agents/my_agent.py
 from r2d2.agents._llm import llm_text
 
-TASK_TYPES = ["my_custom_task"]   # optional — maps task types to this agent
+TASK_TYPES = ["my_custom_task"]   # optional: route these task types here
 
 async def run(task: dict) -> dict:
     result = await llm_text(f"Do the thing: {task['payload'].get('input', '')}")
     return {"ok": True, "output": result}
 ```
 
-2. Restart `./run.sh` — it loads automatically. No config edits needed.
+Restart the core — the dispatcher logs `Loaded sub-agent: my_agent`.
 
----
+</details>
 
-## Architecture
+<details>
+<summary><b>HTTP API</b> (<code>r2d2/server.py</code>, <code>r2d2/api/host_routes.py</code>)</summary>
 
+| Area | Routes |
+|---|---|
+| Status | `GET /health`, `GET /models`, `GET /tools`, `GET` / `PATCH /llm-config` |
+| Chat | `POST /chat` (NDJSON stream), `GET` / `POST /sessions`, `GET` / `DELETE /sessions/{sid}` |
+| Memory | `GET` / `POST /memories`, `DELETE /memories/{mid}` |
+| Tasks | `GET` / `POST /tasks`, `GET` / `DELETE /tasks/{tid}`, `POST /tasks/{tid}/approve`, `POST /tasks/{tid}/reject` |
+| Business | `GET /niches`, `GET /products`, `GET /products/{pid}/file`, `PATCH /products/{pid}/listing`, `GET /analytics/overview` |
+| Marketing | `GET /marketing/queue/{kind}`, `POST /marketing/queue/{kind}/{item_id}/posted` |
+| Automation | `GET /automation`, `POST /automation/start` · `stop` · `trigger/{job_name}`, `PATCH /automation/jobs/{job_name}`, `PATCH /automation/safety` |
+| Audit | `GET /audit` |
+| Host | `GET /host/fs/roots`, `POST /host/fs/list` · `read` · `write`, `POST /host/launch` |
+
+</details>
+
+<h2 align="center">◆ SAFETY ◆</h2>
+<p align="center"><sub>IT CAN TOUCH YOUR MACHINE — SO KEEP THE GUARDRAILS ON</sub></p>
+
+- File tools refuse paths outside `R2D2_WORKSPACE`; `/host/fs/*` is limited to the workspace (plus `R2D2_FS_EXTRA_ROOT`) while `R2D2_FS_RESTRICT=1`, the default.
+- `shell` starts in the workspace but is a real shell — set `R2D2_SHELL_ALLOWLIST` (e.g. `ls,cat,git`) to limit which commands it may run.
+- `R2D2_DRY_RUN=true` returns previews instead of writing to Etsy, Shopify or Pinterest; `R2D2_ACTION_ALLOWLIST` limits which task types the dispatcher will run.
+- The shipped `.env.example` binds to `127.0.0.1` — keep it that way unless you deliberately want LAN access. See [`SECURITY.md`](SECURITY.md): do not expose the agent to the public internet.
+
+<details>
+<summary><b>Reaching your local agent from another device</b></summary>
+
+The panel talks to whatever API base URL you give it. A tunnel works:
+
+```bash
+cloudflared tunnel --url http://localhost:8000
+# or
+ngrok http 8000
 ```
-        ┌──────────────────────────────────────────┐
-        │  Browser — React 19 Control Panel        │
-        │  Cockpit · Chat · Tasks · Analytics      │
-        │  Settings: any LLM provider              │
-        └──────────────────┬───────────────────────┘
-                           │ HTTP + NDJSON streaming
-                           ▼
-        ┌──────────────────────────────────────────┐
-        │  http://localhost:8000  (FastAPI)        │
-        ├──────────────────────────────────────────┤
-        │  LLM Client (unified provider layer)     │
-        │    Ollama · Claude · OpenAI · Gemini     │
-        │    Custom OpenAI-compatible endpoint     │
-        ├──────────────────────────────────────────┤
-        │  Dispatcher → 8 Sub-agents               │
-        │  Tool registry (20+ tools)               │
-        │    Browser (Playwright)                  │
-        │    Email (SMTP/IMAP)                     │
-        │    File ops · Shell · Web search         │
-        │    Etsy · Shopify · Pinterest            │
-        ├──────────────────────────────────────────┤
-        │  Memory (JSON + file-locked)             │
-        │  Scheduler · Audit log · Task queue      │
-        └──────────────────────────────────────────┘
+
+Paste the public URL into **Settings → API base URL**. Anyone with that URL can drive the agent, so only do this deliberately and close the tunnel afterwards.
+
+</details>
+
+<h2 align="center">✦ PROJECT MAP ✦</h2>
+<p align="center"><sub>WHERE THINGS LIVE</sub></p>
+
+<details>
+<summary><b>Folder tree</b></summary>
+
+```text
+r2d2-ai-agent/
+├─ r2d2-agent/                 Python agent core
+│  ├─ run.sh · run.ps1         one-command boot
+│  ├─ requirements.txt · .env.example
+│  └─ r2d2/
+│     ├─ server.py             FastAPI app
+│     ├─ executor.py           plan → tool → observe loop
+│     ├─ llm.py                multi-provider LLM client
+│     ├─ config.py             env config + capability tiers
+│     ├─ tools.py              tool registry
+│     ├─ memory.py · memory/   sessions, long-term + business memory
+│     ├─ agents/               dispatcher + 8 sub-agents
+│     ├─ tools_pkg/            browser, email, Etsy, Shopify, Pinterest, PDF generator
+│     ├─ core/                 task manager, scheduler, audit log
+│     ├─ analytics/            performance tracker
+│     └─ api/host_routes.py    host filesystem + app launch
+├─ src/                        React control panel
+│  ├─ routes/                  cockpit, chat, tasks, products, analytics, approvals,
+│  │                           marketing, audit, tools, memory, settings
+│  ├─ components/              views, Three.js orb, voice bubble, status widgets
+│  ├─ hooks/                   TTS, voice commands, health polling
+│  ├─ lib/                     API client, settings, browser memory, File System Access helpers
+│  └─ server/tts.ts            ElevenLabs server function
+└─ SECURITY.md
 ```
 
----
+</details>
 
-## License
+> R2-D2 is a trademark of its respective owner. This project is a fan-inspired homage and is not affiliated with Lucasfilm.
 
-MIT. Built and maintained by **Mujtaba Mohammed**. R2-D2 is a trademark of its respective owner — this project is a fan-inspired homage and is not affiliated with Lucasfilm.
-
-<div align="center">
-<sub>⭐ If R2D2 makes your day a little smarter, drop a star.</sub>
-</div>
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&amp;weight=500&amp;size=14&amp;duration=3200&amp;pause=900&amp;color=CB55FF&amp;center=true&amp;vCenter=true&amp;width=520&amp;height=28&amp;lines=%E2%97%89+agent+core+online+%2F%2F+awaiting+orders" alt="agent core online">
+  <br>
+  <sub><code>◉ R2D2 // GILDED ORBIT</code> · built by <a href="https://github.com/kamikaze1120">kamikaze1120</a></sub>
+</p>
